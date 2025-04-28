@@ -1,0 +1,150 @@
+/* Custom styles for Knowledge Base */
+
+/* Override Bootstrap variables only when necessary */
+:root {
+    --article-border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Search results dropdown */
+.search-results-dropdown {
+    position: absolute;
+    width: 100%;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.25rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: var(--bs-body-bg);
+}
+
+.search-result-item {
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.search-result-item:hover {
+    background-color: rgba(var(--bs-secondary-rgb), 0.1);
+}
+
+.search-view-all {
+    font-weight: 500;
+}
+
+/* Article styling */
+.article-content {
+    line-height: 1.7;
+}
+
+.article-content h2 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.article-content h3 {
+    margin-top: 1.25rem;
+    margin-bottom: 0.75rem;
+}
+
+.article-content p {
+    margin-bottom: 1rem;
+}
+
+.article-content pre {
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 0.25rem;
+    position: relative;
+    background-color: var(--bs-dark);
+}
+
+.article-content code {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.9em;
+}
+
+.article-content ul, .article-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+/* Tag styling */
+.tag-button {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.tag-button:hover {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+/* Category cards */
+.category-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Article cards */
+.article-card {
+    height: 100%;
+    transition: transform 0.2s ease;
+    border: 1px solid var(--article-border-color);
+}
+
+.article-card:hover {
+    transform: translateY(-3px);
+}
+
+/* Copy code button */
+.copy-code-button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    opacity: 0.7;
+}
+
+.copy-code-button:hover {
+    opacity: 1;
+}
+
+/* Footer styling */
+.footer {
+    margin-top: 4rem;
+    padding: 2rem 0;
+    border-top: 1px solid var(--bs-border-color);
+}
+
+/* Search page */
+.search-highlight {
+    background-color: rgba(var(--bs-warning-rgb), 0.3);
+    padding: 0.1rem 0.2rem;
+    border-radius: 0.2rem;
+}
+
+/* Navigation */
+.nav-link.active {
+    font-weight: 600;
+}
+
+/* Add responsive adjustments */
+@media (max-width: 767.98px) {
+    .article-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .article-content {
+        font-size: 0.95rem;
+    }
+}

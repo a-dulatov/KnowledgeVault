@@ -1,0 +1,128 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ article.title }} - Knowledge Base{% endblock %}
+
+{% block extra_css %}
+<style>
+    .article-header {
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+    
+    .article-metadata {
+        margin-top: 1rem;
+    }
+    
+    .tag-container {
+        margin: 1.5rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Article Header -->
+        <div class="article-header">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('category', category_id=category.id) }}">{{ category.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ article.title }}</li>
+                </ol>
+            </nav>
+            <h1>{{ article.title }}</h1>
+            <div class="article-metadata d-flex justify-content-between flex-wrap">
+                <div>
+                    <span class="me-3"><i class="far fa-calendar-alt me-1"></i> Published: {{ article.created_at }}</span>
+                    {% if article.updated_at != article.created_at %}
+                    <span><i class="far fa-edit me-1"></i> Updated: {{ article.updated_at }}</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <a href="{{ url_for('category', category_id=category.id) }}" class="badge bg-primary text-decoration-none">
+                        {{ category.name }}
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Article Summary -->
+        <div class="card bg-dark mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Summary</h5>
+                <p class="card-text">{{ article.summary }}</p>
+            </div>
+        </div>
+        
+        <!-- Article Content -->
+        <div class="article-content mb-4">
+            {{ article.content|safe }}
+        </div>
+        
+        <!-- Tags -->
+        <div class="tag-container">
+            <h5>Tags</h5>
+            <div>
+                {% for tag in article.tags %}
+                <a href="{{ url_for('search') }}?q={{ tag }}" class="tag-button bg-secondary bg-opacity-25">
+                    <i class="fas fa-tag me-1"></i>{{ tag }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Related Articles -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Related Articles</h5>
+            </div>
+            <div class="card-body" id="relatedArticles">
+                {% if related_articles %}
+                <ul class="list-group list-group-flush">
+                    {% for related in related_articles %}
+                    <li class="list-group-item bg-transparent">
+                        <a href="{{ url_for('article', article_id=related.id) }}" class="text-decoration-none">
+                            {{ related.title }}
+                        </a>
+                        <div class="small text-muted">{{ related.summary }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="mb-0">No related articles found.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Category Information -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">About this Category</h5>
+            </div>
+            <div class="card-body">
+                <h6>{{ category.name }}</h6>
+                <p>{{ category.description }}</p>
+                <a href="{{ url_for('category', category_id=category.id) }}" class="btn btn-primary btn-sm">
+                    View All Articles in this Category
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/articles.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize code highlighting
+        document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightBlock(block);
+        });
+    });
+</script>
+{% endblock %}

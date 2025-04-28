@@ -1,0 +1,27 @@
+[
+    {
+        "id": 1,
+        "name": "Flask",
+        "description": "Articles about Flask web framework"
+    },
+    {
+        "id": 2,
+        "name": "API Development",
+        "description": "Articles about API design and implementation"
+    },
+    {
+        "id": 3,
+        "name": "JavaScript",
+        "description": "Articles about JavaScript programming"
+    },
+    {
+        "id": 4,
+        "name": "Frontend Frameworks",
+        "description": "Articles about CSS and frontend frameworks"
+    },
+    {
+        "id": 5,
+        "name": "Databases",
+        "description": "Articles about database design and usage"
+    }
+]
