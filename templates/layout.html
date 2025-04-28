@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
@@ -11,14 +12,14 @@
     <!-- Highlight.js for code syntax highlighting -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
     <!-- Custom styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">
+            <a class="navbar-brand" href="{% url 'index' %}">
                 <i class="fas fa-book-open me-2"></i>Knowledge Base
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
@@ -27,7 +28,7 @@
             <div class="collapse navbar-collapse" id="navbarMain">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Home</a>
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'index' %}">Home</a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -35,13 +36,13 @@
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="categoriesDropdown">
                             {% for category in categories %}
-                            <li><a class="dropdown-item" href="{{ url_for('category', category_id=category.id) }}">{{ category.name }}</a></li>
+                            <li><a class="dropdown-item" href="{% url 'category_detail' category_id=category.id %}">{{ category.name }}</a></li>
                             {% endfor %}
                         </ul>
                     </li>
                 </ul>
                 <div class="d-flex position-relative">
-                    <form id="searchForm" class="d-flex" action="{{ url_for('search') }}" method="get">
+                    <form id="searchForm" class="d-flex" action="{% url 'search' %}" method="get">
                         <input id="searchInput" class="form-control me-2" type="search" placeholder="Search knowledge base..." aria-label="Search" name="q">
                         <button class="btn btn-outline-light" type="submit">
                             <i class="fas fa-search"></i>
@@ -70,15 +71,15 @@
                     <h5>Categories</h5>
                     <ul class="list-unstyled">
                         {% for category in categories %}
-                        <li><a href="{{ url_for('category', category_id=category.id) }}" class="text-decoration-none link-light">{{ category.name }}</a></li>
+                        <li><a href="{% url 'category_detail' category_id=category.id %}" class="text-decoration-none link-light">{{ category.name }}</a></li>
                         {% endfor %}
                     </ul>
                 </div>
                 <div class="col-md-3">
                     <h5>Links</h5>
                     <ul class="list-unstyled">
-                        <li><a href="/" class="text-decoration-none link-light">Home</a></li>
-                        <li><a href="{{ url_for('search') }}" class="text-decoration-none link-light">Search</a></li>
+                        <li><a href="{% url 'index' %}" class="text-decoration-none link-light">Home</a></li>
+                        <li><a href="{% url 'search' %}" class="text-decoration-none link-light">Search</a></li>
                     </ul>
                 </div>
             </div>
@@ -94,8 +95,8 @@
     <!-- Highlight.js for code syntax highlighting -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
     <!-- Custom JavaScript -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/search.js' %}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
