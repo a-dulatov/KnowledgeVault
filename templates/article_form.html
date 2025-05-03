@@ -1,0 +1,93 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | Knowledge Base{% endblock %}
+
+{% block extra_css %}
+{{ form.media.css }}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary bg-gradient text-white">
+                <h4 class="card-title mb-0">{{ title }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_title" class="form-label">Title</label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.title.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_summary" class="form-label">Summary</label>
+                        {{ form.summary }}
+                        {% if form.summary.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.summary.errors }}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">A brief summary of the article content.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_category" class="form-label">Category</label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.category.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_content" class="form-label">Content</label>
+                        {{ form.content }}
+                        {% if form.content.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.content.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_tags" class="form-label">Tags</label>
+                        {{ form.tags }}
+                        {% if form.tags.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.tags.errors }}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">Enter tags separated by commas (e.g., django, python, web).</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">{{ submit_text }}</button>
+                    </div>
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger mt-3">
+                        {% for error in form.non_field_errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ form.media.js }}
+{% endblock %}
