@@ -7,6 +7,15 @@ urlpatterns = [
     path('category/<int:category_id>/', views.category_detail, name='category_detail'),
     path('search/', views.search_view, name='search'),
     
+    # Authentication URLs
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('register/', views.register_view, name='register'),
+    
+    # Article management
+    path('article/create/', views.create_article, name='create_article'),
+    path('article/<int:article_id>/edit/', views.edit_article, name='edit_article'),
+    
     # API endpoints
     path('api/search/', views.api_search, name='api_search'),
     path('api/articles/', views.api_articles, name='api_articles'),
