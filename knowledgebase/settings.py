@@ -28,6 +28,14 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.replit.app',
+    'https://*.replit.dev',
+    'https://*.repl.co'
+]
+CSRF_FAILURE_VIEW = 'kb.csrf_views.csrf_failure'
+
 
 # Application definition
 

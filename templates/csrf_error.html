@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | Knowledge Base{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-danger bg-gradient text-white">
+                <h4 class="card-title mb-0">CSRF Verification Failed</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>An error occurred</h5>
+                    <p>Your browser failed the Cross-Site Request Forgery (CSRF) protection check. This could be due to any of the following reasons:</p>
+                    <ul>
+                        <li>Your session might have expired. Try refreshing the page.</li>
+                        <li>You may have disabled cookies in your browser.</li>
+                        <li>You're accessing the site via an insecure connection.</li>
+                    </ul>
+                </div>
+                
+                <h5>What you can try:</h5>
+                <ol>
+                    <li>Refresh this page and try again.</li>
+                    <li>Make sure cookies are enabled in your browser.</li>
+                    <li>Clear your browser's cache and cookies.</li>
+                    <li>Try using a different browser.</li>
+                </ol>
+                
+                <div class="d-grid gap-2 col-6 mx-auto mt-4">
+                    <a href="javascript:history.back()" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Go Back
+                    </a>
+                    <a href="{% url 'index' %}" class="btn btn-primary">
+                        <i class="fas fa-home me-1"></i>Return to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
