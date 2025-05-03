@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 from tinymce.models import HTMLField
 
 class Category(models.Model):
@@ -17,6 +18,7 @@ class Article(models.Model):
     content = HTMLField()
     summary = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='articles')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='articles', null=True, blank=True)
     tags = models.JSONField(default=list)
     created_at = models.DateField(default=timezone.now)
     updated_at = models.DateField(default=timezone.now)
