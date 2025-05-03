@@ -32,23 +32,41 @@ class RegistrationForm(UserCreationForm):
 
 
 class ArticleForm(forms.ModelForm):
+    tags_input = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tags (comma separated)'})
+    )
+    
     class Meta:
         model = Article
-        fields = ('title', 'summary', 'content', 'category', 'tags')
+        fields = ('title', 'summary', 'content', 'category')
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'content': forms.Textarea(attrs={'class': 'tinymce'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
-            'tags': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tags (comma separated)'})
         }
     
-    def clean_tags(self):
-        tags = self.cleaned_data.get('tags')
-        if isinstance(tags, str):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # If editing existing article, convert list to comma-separated string
+        if self.instance and self.instance.pk and self.instance.tags:
+            self.initial['tags_input'] = ', '.join(self.instance.tags)
+    
+    def clean_tags_input(self):
+        tags_input = self.cleaned_data.get('tags_input', '')
+        if tags_input:
             # Convert comma-separated string to list
-            return [tag.strip() for tag in tags.split(',') if tag.strip()]
-        return tags
+            return [tag.strip() for tag in tags_input.split(',') if tag.strip()]
+        return []
+    
+    def save(self, commit=True):
+        article = super().save(commit=False)
+        article.tags = self.cleaned_data.get('tags_input', [])
+        
+        if commit:
+            article.save()
+        return article
         
     class Media:
         css = {

@@ -15,7 +15,7 @@
                 <h4 class="card-title mb-0">{{ title }}</h4>
             </div>
             <div class="card-body">
-                <form method="post">
+                <form method="post" action="{% if article %}{% url 'edit_article' article_id=article.id %}{% else %}{% url 'create_article' %}{% endif %}">
                     {% csrf_token %}
                     
                     <div class="mb-3">
@@ -60,11 +60,11 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="id_tags" class="form-label">Tags</label>
-                        {{ form.tags }}
-                        {% if form.tags.errors %}
+                        <label for="id_tags_input" class="form-label">Tags</label>
+                        {{ form.tags_input }}
+                        {% if form.tags_input.errors %}
                         <div class="invalid-feedback d-block">
-                            {{ form.tags.errors }}
+                            {{ form.tags_input.errors }}
                         </div>
                         {% endif %}
                         <div class="form-text">Enter tags separated by commas (e.g., django, python, web).</div>

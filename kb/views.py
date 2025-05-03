@@ -184,6 +184,7 @@ def create_article(request):
     """Create a new article"""
     if request.method == 'POST':
         form = ArticleForm(request.POST)
+        print(f"Form is valid: {form.is_valid()}")
         if form.is_valid():
             article = form.save(commit=False)
             article.author = request.user
@@ -192,6 +193,8 @@ def create_article(request):
             article.save()
             messages.success(request, f"Article '{article.title}' was created successfully.")
             return redirect('article_detail', article_id=article.id)
+        else:
+            print(f"Form errors: {form.errors}")
     else:
         form = ArticleForm()
     
@@ -213,12 +216,15 @@ def edit_article(request, article_id):
     
     if request.method == 'POST':
         form = ArticleForm(request.POST, instance=article)
+        print(f"Edit form is valid: {form.is_valid()}")
         if form.is_valid():
             article = form.save(commit=False)
             article.updated_at = timezone.now()
             article.save()
             messages.success(request, f"Article '{article.title}' was updated successfully.")
             return redirect('article_detail', article_id=article.id)
+        else:
+            print(f"Edit form errors: {form.errors}")
     else:
         form = ArticleForm(instance=article)
     
