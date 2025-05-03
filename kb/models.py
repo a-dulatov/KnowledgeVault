@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from tinymce.models import HTMLField
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -13,7 +14,7 @@ class Category(models.Model):
 
 class Article(models.Model):
     title = models.CharField(max_length=200)
-    content = models.TextField()
+    content = HTMLField()
     summary = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='articles')
     tags = models.JSONField(default=list)
