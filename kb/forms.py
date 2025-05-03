@@ -38,6 +38,7 @@ class ArticleForm(forms.ModelForm):
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'content': forms.Textarea(attrs={'class': 'tinymce'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
             'tags': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tags (comma separated)'})
         }
@@ -48,3 +49,11 @@ class ArticleForm(forms.ModelForm):
             # Convert comma-separated string to list
             return [tag.strip() for tag in tags.split(',') if tag.strip()]
         return tags
+        
+    class Media:
+        css = {
+            'all': ('https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.4.2/skins/ui/oxide-dark/skin.min.css',)
+        }
+        js = (
+            'https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.4.2/tinymce.min.js',
+        )
