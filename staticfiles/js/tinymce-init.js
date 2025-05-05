@@ -16,6 +16,20 @@ document.addEventListener('DOMContentLoaded', function() {
     skin: 'oxide-dark',
     content_css: 'dark',
     promotion: false,
-    branding: false
+    branding: false,
+    setup: function(editor) {
+      // Add a listener to update the hidden textarea before form submission
+      editor.on('change', function() {
+        editor.save();
+      });
+    }
+  });
+  
+  // Add form submit handler to ensure content is updated
+  document.querySelectorAll('form').forEach(function(form) {
+    form.addEventListener('submit', function() {
+      // Save content from all editors to their respective textarea elements
+      tinymce.triggerSave();
+    });
   });
 });
