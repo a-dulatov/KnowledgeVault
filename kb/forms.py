@@ -76,3 +76,27 @@ class ArticleForm(forms.ModelForm):
         js = (
             'https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.4.2/tinymce.min.js',
         )
+
+
+class ParagraphForm(forms.ModelForm):
+    class Meta:
+        model = ArticleParagraph
+        fields = ('title', 'content')
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Paragraph title'}),
+            'content': forms.Textarea(attrs={'class': 'tinymce', 'required': False}),
+        }
+    
+    def clean_content(self):
+        content = self.cleaned_data.get('content', '')
+        if not content or content.strip() == '':
+            raise forms.ValidationError("Please provide some content for the paragraph.")
+        return content
+    
+    class Media:
+        css = {
+            'all': ('https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.4.2/skins/ui/oxide-dark/skin.min.css',)
+        }
+        js = (
+            'https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.4.2/tinymce.min.js',
+        )
