@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from .models import Article, Category
+from .models import Article, Category, ArticleAttachment
 from .forms import LoginForm, RegistrationForm, ArticleForm
 from django.db.models import Q
 import json
@@ -191,6 +191,17 @@ def create_article(request):
             article.created_at = timezone.now()
             article.updated_at = timezone.now()
             article.save()
+            
+            # Handle multiple file uploads
+            files = request.FILES.getlist('attachments')
+            for file in files:
+                if file:
+                    ArticleAttachment.objects.create(
+                        article=article,
+                        file=file,
+                        original_name=file.name
+                    )
+            
             messages.success(request, f"Article '{article.title}' was created successfully.")
             return redirect('article_detail', article_id=article.id)
         else:
@@ -221,6 +232,17 @@ def edit_article(request, article_id):
             article = form.save(commit=False)
             article.updated_at = timezone.now()
             article.save()
+            
+            # Handle multiple file uploads
+            files = request.FILES.getlist('attachments')
+            for file in files:
+                if file:
+                    ArticleAttachment.objects.create(
+                        article=article,
+                        file=file,
+                        original_name=file.name
+                    )
+            
             messages.success(request, f"Article '{article.title}' was updated successfully.")
             return redirect('article_detail', article_id=article.id)
         else:
