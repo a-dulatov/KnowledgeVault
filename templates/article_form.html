@@ -102,6 +102,64 @@
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary">{{ submit_text }}</button>
                     </div>
+                </form>
+                
+                <!-- Paragraph Management Section (Only for editing) -->
+                {% if article %}
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4>Article Paragraphs</h4>
+                        <a href="{% url 'add_paragraph' article_id=article.id %}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Add Paragraph
+                        </a>
+                    </div>
+                    
+                    {% if article.paragraphs.exists %}
+                    <div id="paragraphsList" class="sortable-paragraphs">
+                        {% for paragraph in article.paragraphs.all %}
+                        <div class="card mb-3 paragraph-item" data-paragraph-id="{{ paragraph.id }}">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-grip-vertical text-muted me-2 drag-handle" style="cursor: move;"></i>
+                                    <h6 class="mb-0">{{ paragraph.title }}</h6>
+                                    <span class="badge bg-secondary ms-2">Order: {{ paragraph.order }}</span>
+                                </div>
+                                <div>
+                                    <a href="{% url 'edit_paragraph' paragraph_id=paragraph.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            onclick="deleteParagraph({{ paragraph.id }}, '{{ paragraph.title }}')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="paragraph-content">
+                                    {{ paragraph.content|safe|truncatewords:20 }}
+                                </div>
+                                {% if paragraph.attachments.exists %}
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-paperclip"></i> 
+                                        {{ paragraph.attachments.count }} attachment{{ paragraph.attachments.count|pluralize }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted">No paragraphs added yet.</p>
+                        <a href="{% url 'add_paragraph' article_id=article.id %}" class="btn btn-primary">
+                            Add First Paragraph
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
                     
                     {% if form.non_field_errors %}
                     <div class="alert alert-danger mt-3">

@@ -17,6 +17,13 @@ urlpatterns = [
     path('article/<int:article_id>/edit/', views.edit_article, name='edit_article'),
     path('attachment/<int:attachment_id>/delete/', views.delete_attachment, name='delete_attachment'),
     
+    # Paragraph management
+    path('article/<int:article_id>/paragraph/add/', views.add_paragraph, name='add_paragraph'),
+    path('paragraph/<int:paragraph_id>/edit/', views.edit_paragraph, name='edit_paragraph'),
+    path('paragraph/<int:paragraph_id>/delete/', views.delete_paragraph, name='delete_paragraph'),
+    path('paragraph-attachment/<int:attachment_id>/delete/', views.delete_paragraph_attachment, name='delete_paragraph_attachment'),
+    path('article/<int:article_id>/reorder-paragraphs/', views.reorder_paragraphs, name='reorder_paragraphs'),
+    
     # API endpoints
     path('api/search/', views.api_search, name='api_search'),
     path('api/articles/', views.api_articles, name='api_articles'),

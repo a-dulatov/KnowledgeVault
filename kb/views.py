@@ -4,8 +4,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from .models import Article, Category, ArticleAttachment
-from .forms import LoginForm, RegistrationForm, ArticleForm
+from .models import Article, Category, ArticleAttachment, ArticleParagraph, ParagraphAttachment
+from .forms import LoginForm, RegistrationForm, ArticleForm, ParagraphForm
 from django.db.models import Q
 import json
 
@@ -278,6 +278,168 @@ def delete_attachment(request, attachment_id):
         # Redirect back to edit page if came from there, otherwise to article detail
         if 'edit' in request.META.get('HTTP_REFERER', ''):
             return redirect('edit_article', article_id=article.id)
+        else:
+            return redirect('article_detail', article_id=article.id)
+    
+    return redirect('article_detail', article_id=article.id)
+
+
+@login_required
+def add_paragraph(request, article_id):
+    """Add a new paragraph to an article"""
+    article = get_object_or_404(Article, id=article_id)
+    
+    # Check if user is the author
+    if article.author != request.user:
+        messages.error(request, "You don't have permission to edit this article.")
+        return redirect('article_detail', article_id=article.id)
+    
+    if request.method == 'POST':
+        form = ParagraphForm(request.POST)
+        if form.is_valid():
+            paragraph = form.save(commit=False)
+            paragraph.article = article
+            # Set order to be last
+            last_paragraph = article.paragraphs.order_by('-order').first()
+            paragraph.order = (last_paragraph.order + 1) if last_paragraph else 1
+            paragraph.save()
+            
+            # Handle file attachments
+            files = request.FILES.getlist('attachments')
+            for file in files:
+                ParagraphAttachment.objects.create(
+                    paragraph=paragraph,
+                    file=file,
+                    original_name=file.name
+                )
+            
+            messages.success(request, "Paragraph added successfully.")
+            return redirect('edit_article', article_id=article.id)
+    else:
+        form = ParagraphForm()
+    
+    return render(request, 'paragraph_form.html', {
+        'form': form,
+        'article': article,
+        'title': f'Add Paragraph to: {article.title}',
+        'submit_text': 'Add Paragraph'
+    })
+
+
+@login_required
+def edit_paragraph(request, paragraph_id):
+    """Edit an existing paragraph"""
+    paragraph = get_object_or_404(ArticleParagraph, id=paragraph_id)
+    article = paragraph.article
+    
+    # Check if user is the author
+    if article.author != request.user:
+        messages.error(request, "You don't have permission to edit this paragraph.")
+        return redirect('article_detail', article_id=article.id)
+    
+    if request.method == 'POST':
+        form = ParagraphForm(request.POST, instance=paragraph)
+        if form.is_valid():
+            form.save()
+            
+            # Handle file attachments
+            files = request.FILES.getlist('attachments')
+            for file in files:
+                ParagraphAttachment.objects.create(
+                    paragraph=paragraph,
+                    file=file,
+                    original_name=file.name
+                )
+            
+            messages.success(request, "Paragraph updated successfully.")
+            return redirect('edit_article', article_id=article.id)
+    else:
+        form = ParagraphForm(instance=paragraph)
+    
+    return render(request, 'paragraph_form.html', {
+        'form': form,
+        'paragraph': paragraph,
+        'article': article,
+        'title': f'Edit Paragraph: {paragraph.title}',
+        'submit_text': 'Update Paragraph'
+    })
+
+
+@login_required
+def delete_paragraph(request, paragraph_id):
+    """Delete a paragraph"""
+    paragraph = get_object_or_404(ArticleParagraph, id=paragraph_id)
+    article = paragraph.article
+    
+    # Check if user is the author
+    if article.author != request.user:
+        messages.error(request, "You don't have permission to delete this paragraph.")
+        return redirect('article_detail', article_id=article.id)
+    
+    if request.method == 'POST':
+        # Delete all attachments first
+        for attachment in paragraph.attachments.all():
+            attachment.file.delete(save=False)
+            attachment.delete()
+        
+        paragraph.delete()
+        messages.success(request, f"Paragraph '{paragraph.title}' was deleted successfully.")
+        return redirect('edit_article', article_id=article.id)
+    
+    return redirect('edit_article', article_id=article.id)
+
+
+@login_required
+def reorder_paragraphs(request, article_id):
+    """Update paragraph order via AJAX"""
+    if request.method == 'POST':
+        article = get_object_or_404(Article, id=article_id)
+        
+        # Check if user is the author
+        if article.author != request.user:
+            return JsonResponse({'success': False, 'error': 'Permission denied'})
+        
+        try:
+            data = json.loads(request.body)
+            paragraph_orders = data.get('paragraph_orders', [])
+            
+            for item in paragraph_orders:
+                paragraph_id = item.get('id')
+                new_order = item.get('order')
+                
+                paragraph = ArticleParagraph.objects.get(id=paragraph_id, article=article)
+                paragraph.order = new_order
+                paragraph.save()
+            
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+@login_required
+def delete_paragraph_attachment(request, attachment_id):
+    """Delete a paragraph attachment"""
+    attachment = get_object_or_404(ParagraphAttachment, id=attachment_id)
+    paragraph = attachment.paragraph
+    article = paragraph.article
+    
+    # Check if user is the author
+    if article.author != request.user:
+        messages.error(request, "You don't have permission to delete this attachment.")
+        return redirect('article_detail', article_id=article.id)
+    
+    if request.method == 'POST':
+        # Delete the file from filesystem
+        attachment.file.delete(save=False)
+        # Delete the attachment record
+        attachment.delete()
+        messages.success(request, f"Attachment '{attachment.original_name}' was deleted successfully.")
+        
+        # Redirect back to edit page if came from there, otherwise to article detail
+        if 'edit' in request.META.get('HTTP_REFERER', ''):
+            return redirect('edit_paragraph', paragraph_id=paragraph.id)
         else:
             return redirect('article_detail', article_id=article.id)
     
