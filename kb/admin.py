@@ -2,14 +2,14 @@ from django.contrib import admin
 from .models import Category, Article
 
 class ArticleAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'created_at', 'updated_at')
+    list_display = ('title', 'category', 'attachment', 'created_at', 'updated_at')
     list_filter = ('category', 'created_at', 'updated_at')
     search_fields = ('title', 'content', 'summary')
     prepopulated_fields = {'title': ('title',)}
     readonly_fields = ('created_at', 'updated_at')
     fieldsets = (
         (None, {
-            'fields': ('title', 'summary', 'content', 'category', 'tags')
+            'fields': ('title', 'summary', 'content', 'category', 'tags', 'attachment')
         }),
         ('Dates', {
             'fields': ('created_at', 'updated_at'),

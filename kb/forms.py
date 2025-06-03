@@ -39,12 +39,13 @@ class ArticleForm(forms.ModelForm):
     
     class Meta:
         model = Article
-        fields = ('title', 'summary', 'content', 'category')
+        fields = ('title', 'summary', 'content', 'category', 'attachment')
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'content': forms.Textarea(attrs={'class': 'tinymce', 'required': False}),
             'category': forms.Select(attrs={'class': 'form-control'}),
+            'attachment': forms.FileInput(attrs={'class': 'form-control'}),
         }
     
     def __init__(self, *args, **kwargs):

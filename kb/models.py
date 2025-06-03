@@ -20,6 +20,7 @@ class Article(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='articles')
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='articles', null=True, blank=True)
     tags = models.JSONField(default=list)
+    attachment = models.FileField(upload_to='attachments/', null=True, blank=True)
     created_at = models.DateField(default=timezone.now)
     updated_at = models.DateField(default=timezone.now)
     

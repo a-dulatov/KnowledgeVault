@@ -74,6 +74,24 @@
             {{ article.content|safe }}
         </div>
         
+        <!-- Attachment -->
+        {% if article.attachment %}
+        <div class="card bg-dark mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-paperclip me-2"></i>Attachment</h5>
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-file me-2 text-primary"></i>
+                    <div>
+                        <a href="{{ article.attachment.url }}" target="_blank" class="text-decoration-none">
+                            {{ article.attachment.name|cut:"attachments/" }}
+                        </a>
+                        <div class="small text-muted">Click to download or view</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
         <!-- Tags -->
         <div class="tag-container">
             <h5>Tags</h5>

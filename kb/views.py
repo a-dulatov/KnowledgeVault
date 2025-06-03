@@ -183,7 +183,7 @@ def logout_view(request):
 def create_article(request):
     """Create a new article"""
     if request.method == 'POST':
-        form = ArticleForm(request.POST)
+        form = ArticleForm(request.POST, request.FILES)
         print(f"Form is valid: {form.is_valid()}")
         if form.is_valid():
             article = form.save(commit=False)
@@ -215,7 +215,7 @@ def edit_article(request, article_id):
         return redirect('article_detail', article_id=article.id)
     
     if request.method == 'POST':
-        form = ArticleForm(request.POST, instance=article)
+        form = ArticleForm(request.POST, request.FILES, instance=article)
         print(f"Edit form is valid: {form.is_valid()}")
         if form.is_valid():
             article = form.save(commit=False)
