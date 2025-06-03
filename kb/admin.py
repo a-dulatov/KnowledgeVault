@@ -7,13 +7,21 @@ class ArticleAttachmentInline(admin.TabularInline):
     fields = ('file', 'original_name')
     readonly_fields = ('uploaded_at',)
 
+
+class ArticleParagraphInline(admin.TabularInline):
+    model = ArticleParagraph
+    extra = 1
+    fields = ('title', 'content', 'order')
+    ordering = ['order']
+
+
 class ArticleAdmin(admin.ModelAdmin):
     list_display = ('title', 'category', 'attachment_count', 'created_at', 'updated_at')
     list_filter = ('category', 'created_at', 'updated_at')
     search_fields = ('title', 'summary')
     prepopulated_fields = {'title': ('title',)}
     readonly_fields = ('created_at', 'updated_at')
-    inlines = [ArticleAttachmentInline]
+    inlines = [ArticleParagraphInline, ArticleAttachmentInline]
     fieldsets = (
         (None, {
             'fields': ('title', 'summary', 'category', 'tags')
@@ -41,13 +49,6 @@ class ParagraphAttachmentInline(admin.TabularInline):
     extra = 1
     fields = ('file', 'original_name')
     readonly_fields = ('uploaded_at',)
-
-
-class ArticleParagraphInline(admin.TabularInline):
-    model = ArticleParagraph
-    extra = 1
-    fields = ('title', 'content', 'order')
-    ordering = ['order']
 
 
 class ParagraphAdmin(admin.ModelAdmin):
