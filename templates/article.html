@@ -69,9 +69,69 @@
             </div>
         </div>
         
-        <!-- Article Content -->
+        <!-- Article Content - Paragraphs -->
         <div class="article-content mb-4">
-            {{ article.content|safe }}
+            {% if article.paragraphs.exists %}
+                {% for paragraph in article.paragraphs.all %}
+                <div class="paragraph-section mb-4">
+                    <h4 class="paragraph-title">{{ paragraph.title }}</h4>
+                    <div class="paragraph-content">
+                        {{ paragraph.content|safe }}
+                    </div>
+                    
+                    <!-- Paragraph Attachments -->
+                    {% if paragraph.attachments.exists %}
+                    <div class="paragraph-attachments mt-3">
+                        <h6><i class="fas fa-paperclip me-2"></i>Attachments for this section:</h6>
+                        <div class="row">
+                            {% for attachment in paragraph.attachments.all %}
+                            <div class="col-md-6 mb-2">
+                                <div class="d-flex align-items-center justify-content-between p-2 border rounded">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file me-2 text-primary"></i>
+                                        <div>
+                                            <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none">
+                                                {{ attachment.original_name }}
+                                            </a>
+                                            <div class="small text-muted">
+                                                Uploaded: {{ attachment.uploaded_at|date:"M d, Y" }}
+                                                {% if attachment.file_size %}
+                                                | Size: {{ attachment.file_size|filesizeformat }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% if user.is_authenticated and article.author == user %}
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            onclick="deleteParagraphAttachment({{ attachment.id }}, '{{ attachment.original_name }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Fallback to old content field for backward compatibility -->
+                {% if article.content %}
+                <div class="legacy-content">
+                    {{ article.content|safe }}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-muted">No content available for this article.</p>
+                    {% if user.is_authenticated and article.author == user %}
+                    <a href="{% url 'edit_article' article_id=article.id %}" class="btn btn-primary">
+                        Add Content
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endif %}
         </div>
         
         <!-- Attachments -->
@@ -182,23 +242,44 @@
             form.method = 'POST';
             form.action = `{% url 'delete_attachment' attachment_id=0 %}`.replace('0', attachmentId);
             
-            // Get CSRF token from meta tag or existing forms
+            // Get CSRF token from Django's cookie if available
             let csrfToken = '';
-            const metaToken = document.querySelector('meta[name=csrf-token]');
-            const formToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                if (cookie.trim().startsWith('csrftoken=')) {
+                    csrfToken = cookie.trim().substring('csrftoken='.length);
+                    break;
+                }
+            }
             
-            if (metaToken) {
-                csrfToken = metaToken.getAttribute('content');
-            } else if (formToken) {
-                csrfToken = formToken.value;
-            } else {
-                // Get CSRF token from Django's cookie if available
-                const cookies = document.cookie.split(';');
-                for (let cookie of cookies) {
-                    if (cookie.trim().startsWith('csrftoken=')) {
-                        csrfToken = cookie.trim().substring('csrftoken='.length);
-                        break;
-                    }
+            if (csrfToken) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+            }
+            
+            // Submit the form
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    function deleteParagraphAttachment(attachmentId, fileName) {
+        if (confirm(`Are you sure you want to delete "${fileName}"? This action cannot be undone.`)) {
+            // Create a form to submit the delete request
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `{% url 'delete_paragraph_attachment' attachment_id=0 %}`.replace('0', attachmentId);
+            
+            // Get CSRF token from Django's cookie if available
+            let csrfToken = '';
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                if (cookie.trim().startsWith('csrftoken=')) {
+                    csrfToken = cookie.trim().substring('csrftoken='.length);
+                    break;
                 }
             }
             

@@ -178,6 +178,7 @@
 {% block extra_js %}
 {{ form.media.js }}
 <script src="{% static 'js/tinymce-init.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
 function deleteAttachment(attachmentId, fileName) {
     if (confirm(`Are you sure you want to delete "${fileName}"? This action cannot be undone.`)) {
@@ -200,8 +201,27 @@ function deleteAttachment(attachmentId, fileName) {
     }
 }
 
-// File input enhancement
+function deleteParagraph(paragraphId, paragraphTitle) {
+    if (confirm(`Are you sure you want to delete the paragraph "${paragraphTitle}"? This action cannot be undone and will also delete all attachments.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `{% url 'delete_paragraph' paragraph_id=0 %}`.replace('0', paragraphId);
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Initialize sortable paragraphs and other functionality
 document.addEventListener('DOMContentLoaded', function() {
+    // File input enhancement
     const fileInput = document.querySelector('input[name="attachments"]');
     if (fileInput) {
         fileInput.addEventListener('change', function() {
@@ -212,6 +232,89 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Initialize sortable for paragraphs (only if editing an article)
+    const paragraphsList = document.getElementById('paragraphsList');
+    if (paragraphsList) {
+        let sortable = Sortable.create(paragraphsList, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            onEnd: function(evt) {
+                // Update paragraph order
+                updateParagraphOrder();
+            }
+        });
+        
+        // Add CSS for sortable states
+        const style = document.createElement('style');
+        style.textContent = `
+            .sortable-ghost {
+                opacity: 0.4;
+            }
+            .sortable-chosen {
+                background-color: var(--bs-primary-bg-subtle);
+            }
+            .sortable-drag {
+                opacity: 0.8;
+            }
+            .paragraph-item {
+                transition: all 0.2s ease;
+            }
+            .paragraph-item:hover {
+                box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            }
+        `;
+        document.head.appendChild(style);
+    }
 });
+
+function updateParagraphOrder() {
+    const paragraphItems = document.querySelectorAll('.paragraph-item');
+    const paragraphOrders = [];
+    
+    paragraphItems.forEach((item, index) => {
+        const paragraphId = item.getAttribute('data-paragraph-id');
+        paragraphOrders.push({
+            id: paragraphId,
+            order: index + 1
+        });
+        
+        // Update the order badge
+        const orderBadge = item.querySelector('.badge');
+        if (orderBadge) {
+            orderBadge.textContent = `Order: ${index + 1}`;
+        }
+    });
+    
+    // Send AJAX request to update order
+    const articleId = '{{ article.id }}';
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`{% url 'reorder_paragraphs' article_id=0 %}`.replace('0', articleId), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+            paragraph_orders: paragraphOrders
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            console.error('Failed to update paragraph order:', data.error);
+            // Optionally show a user-friendly error message
+            alert('Failed to update paragraph order. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating paragraph order:', error);
+        alert('Failed to update paragraph order. Please try again.');
+    });
+}
 </script>
 {% endblock %}
