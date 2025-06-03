@@ -74,19 +74,30 @@
             {{ article.content|safe }}
         </div>
         
-        <!-- Attachment -->
-        {% if article.attachment %}
+        <!-- Attachments -->
+        {% if article.attachments.exists %}
         <div class="card bg-dark mb-4">
             <div class="card-body">
-                <h5 class="card-title"><i class="fas fa-paperclip me-2"></i>Attachment</h5>
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-file me-2 text-primary"></i>
-                    <div>
-                        <a href="{{ article.attachment.url }}" target="_blank" class="text-decoration-none">
-                            {{ article.attachment.name|cut:"attachments/" }}
-                        </a>
-                        <div class="small text-muted">Click to download or view</div>
+                <h5 class="card-title"><i class="fas fa-paperclip me-2"></i>Attachments</h5>
+                <div class="row">
+                    {% for attachment in article.attachments.all %}
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex align-items-center p-2 border rounded">
+                            <i class="fas fa-file me-2 text-primary"></i>
+                            <div class="flex-grow-1">
+                                <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none">
+                                    {{ attachment.original_name }}
+                                </a>
+                                <div class="small text-muted">
+                                    Uploaded: {{ attachment.uploaded_at|date:"M d, Y" }}
+                                    {% if attachment.file_size %}
+                                    | Size: {{ attachment.file_size|filesizeformat }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>

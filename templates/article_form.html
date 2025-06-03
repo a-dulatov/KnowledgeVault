@@ -71,17 +71,20 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="id_attachment" class="form-label">Attachment (Optional)</label>
-                        {{ form.attachment }}
-                        {% if form.attachment.errors %}
-                        <div class="invalid-feedback d-block">
-                            {{ form.attachment.errors }}
-                        </div>
-                        {% endif %}
-                        <div class="form-text">Upload a file to attach to this article (PDF, DOC, images, etc.).</div>
-                        {% if article and article.attachment %}
+                        <label for="id_attachments" class="form-label">Attachments (Optional)</label>
+                        <input type="file" name="attachments" class="form-control" multiple>
+                        <div class="form-text">Select multiple files to attach to this article (PDF, DOC, images, etc.).</div>
+                        {% if article and article.attachments.exists %}
                         <div class="mt-2">
-                            <small class="text-muted">Current file: <a href="{{ article.attachment.url }}" target="_blank">{{ article.attachment.name|cut:"attachments/" }}</a></small>
+                            <small class="text-muted">Current attachments:</small>
+                            <ul class="list-unstyled">
+                                {% for attachment in article.attachments.all %}
+                                <li>
+                                    <a href="{{ attachment.file.url }}" target="_blank">{{ attachment.original_name }}</a>
+                                    <small class="text-muted">({{ attachment.uploaded_at|date:"M d, Y" }})</small>
+                                </li>
+                                {% endfor %}
+                            </ul>
                         </div>
                         {% endif %}
                     </div>
