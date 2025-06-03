@@ -15,6 +15,7 @@ urlpatterns = [
     # Article management
     path('article/create/', views.create_article, name='create_article'),
     path('article/<int:article_id>/edit/', views.edit_article, name='edit_article'),
+    path('attachment/<int:attachment_id>/delete/', views.delete_attachment, name='delete_attachment'),
     
     # API endpoints
     path('api/search/', views.api_search, name='api_search'),

@@ -256,3 +256,29 @@ def edit_article(request, article_id):
         'title': f'Edit Article: {article.title}',
         'submit_text': 'Update Article'
     })
+
+@login_required
+def delete_attachment(request, attachment_id):
+    """Delete an attachment from an article"""
+    attachment = get_object_or_404(ArticleAttachment, id=attachment_id)
+    article = attachment.article
+    
+    # Check if user is the author of the article
+    if article.author != request.user:
+        messages.error(request, "You don't have permission to delete this attachment.")
+        return redirect('article_detail', article_id=article.id)
+    
+    if request.method == 'POST':
+        # Delete the file from filesystem
+        attachment.file.delete(save=False)
+        # Delete the attachment record
+        attachment.delete()
+        messages.success(request, f"Attachment '{attachment.original_name}' was deleted successfully.")
+        
+        # Redirect back to edit page if came from there, otherwise to article detail
+        if 'edit' in request.META.get('HTTP_REFERER', ''):
+            return redirect('edit_article', article_id=article.id)
+        else:
+            return redirect('article_detail', article_id=article.id)
+    
+    return redirect('article_detail', article_id=article.id)
