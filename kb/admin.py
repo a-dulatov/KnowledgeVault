@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Article
+from .models import Category, Article, ArticleAttachment
 
 class ArticleAdmin(admin.ModelAdmin):
     list_display = ('title', 'category', 'attachment', 'created_at', 'updated_at')

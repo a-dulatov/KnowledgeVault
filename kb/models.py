@@ -20,9 +20,29 @@ class Article(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='articles')
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='articles', null=True, blank=True)
     tags = models.JSONField(default=list)
-    attachment = models.FileField(upload_to='attachments/', null=True, blank=True)
     created_at = models.DateField(default=timezone.now)
     updated_at = models.DateField(default=timezone.now)
     
     def __str__(self):
         return self.title
+
+
+class ArticleAttachment(models.Model):
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='attachments/')
+    original_name = models.CharField(max_length=255)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.original_name} - {self.article.title}"
+    
+    @property
+    def file_size(self):
+        try:
+            return self.file.size
+        except:
+            return 0
+    
+    @property
+    def file_extension(self):
+        return self.original_name.split('.')[-1].lower() if '.' in self.original_name else ''

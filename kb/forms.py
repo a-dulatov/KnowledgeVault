@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import Article
+from .models import Article, ArticleAttachment
 
 
 class LoginForm(forms.Form):
@@ -36,16 +36,16 @@ class ArticleForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tags (comma separated)'})
     )
+
     
     class Meta:
         model = Article
-        fields = ('title', 'summary', 'content', 'category', 'attachment')
+        fields = ('title', 'summary', 'content', 'category')
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'content': forms.Textarea(attrs={'class': 'tinymce', 'required': False}),
             'category': forms.Select(attrs={'class': 'form-control'}),
-            'attachment': forms.FileInput(attrs={'class': 'form-control'}),
         }
     
     def __init__(self, *args, **kwargs):
