@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import Article, ArticleAttachment
+from .models import Article, ArticleAttachment, ArticleParagraph
 
 
 class LoginForm(forms.Form):
@@ -40,11 +40,10 @@ class ArticleForm(forms.ModelForm):
     
     class Meta:
         model = Article
-        fields = ('title', 'summary', 'content', 'category')
+        fields = ('title', 'summary', 'category')
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'content': forms.Textarea(attrs={'class': 'tinymce', 'required': False}),
             'category': forms.Select(attrs={'class': 'form-control'}),
         }
     
@@ -54,12 +53,7 @@ class ArticleForm(forms.ModelForm):
         if self.instance and self.instance.pk and self.instance.tags:
             self.initial['tags_input'] = ', '.join(self.instance.tags)
     
-    def clean_content(self):
-        content = self.cleaned_data.get('content', '')
-        if not content or content.strip() == '':
-            raise forms.ValidationError("Please provide some content for the article.")
-        return content
-        
+
     def clean_tags_input(self):
         tags_input = self.cleaned_data.get('tags_input', '')
         if tags_input:
