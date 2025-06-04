@@ -828,14 +828,26 @@
         const likeButtons = document.querySelectorAll('.like-btn, .dislike-btn');
         likeButtons.forEach(button => {
             button.addEventListener('click', function() {
+                // Check if user is authenticated
+                const userAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+                if (!userAuthenticated) {
+                    alert('Please log in to like or dislike paragraphs.');
+                    window.location.href = '/login/';
+                    return;
+                }
+
                 const paragraphId = this.dataset.paragraphId;
                 const action = this.dataset.action;
                 const isCurrentlyActive = this.classList.contains('btn-success') || this.classList.contains('btn-danger');
                 const finalAction = isCurrentlyActive ? 'remove' : action;
                 
                 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                                 document.querySelector('meta[name=csrf-token]')?.getAttribute('content') ||
                                  getCookie('csrftoken');
+                
+                if (!csrfToken) {
+                    alert('Security token not found. Please refresh the page.');
+                    return;
+                }
                 
                 fetch(`/paragraph/${paragraphId}/like/`, {
                     method: 'POST',
@@ -845,7 +857,12 @@
                     },
                     body: `action=${finalAction}`
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         updateParagraphLikes(paragraphId, data.like_count, data.dislike_count, data.user_action);
@@ -855,7 +872,7 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Failed to update like/dislike');
+                    alert('Please log in to use this feature.');
                 });
             });
         });
