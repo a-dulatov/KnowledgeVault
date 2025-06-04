@@ -1,0 +1,52 @@
+<div class="comment mb-3" data-comment-id="{{ comment.id }}">
+    <div class="d-flex">
+        <div class="flex-shrink-0">
+            <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                <i class="fas fa-user text-white"></i>
+            </div>
+        </div>
+        <div class="flex-grow-1 ms-3">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <strong>{{ comment.user.username }}</strong>
+                    <small class="text-muted ms-2">{{ comment.created_at|date:"M d, Y \a\t H:i" }}</small>
+                </div>
+                {% if user.is_authenticated %}
+                <button class="btn btn-sm btn-outline-secondary reply-btn" data-comment-id="{{ comment.id }}">
+                    <i class="fas fa-reply"></i> Reply
+                </button>
+                {% endif %}
+            </div>
+            <div class="mt-2">
+                {{ comment.content|linebreaksbr }}
+            </div>
+            
+            <!-- Reply form (initially hidden) -->
+            {% if user.is_authenticated %}
+            <div class="reply-form mt-3" id="reply-form-{{ comment.id }}" style="display: none;">
+                <form class="comment-reply-form" data-parent-id="{{ comment.id }}">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <textarea class="form-control" name="content" rows="2" placeholder="Write a reply..." required></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fas fa-paper-plane"></i> Reply
+                        </button>
+                        <button type="button" class="btn btn-sm btn-secondary cancel-reply">Cancel</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+            
+            <!-- Replies -->
+            {% if comment.get_replies %}
+            <div class="replies mt-3 ms-3">
+                {% for reply in comment.get_replies %}
+                    {% include 'partials/comment.html' with comment=reply %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

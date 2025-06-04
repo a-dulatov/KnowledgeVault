@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import (Category, Article, ArticleAttachment, ArticleParagraph, 
-                     ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView)
+                     ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView,
+                     ArticleRating, ArticleComment, ParagraphLike)
 
 class ArticleAttachmentInline(admin.TabularInline):
     model = ArticleAttachment

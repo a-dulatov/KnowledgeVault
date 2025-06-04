@@ -223,6 +223,24 @@
                         {{ paragraph.content|safe }}
                     </div>
                     
+                    <!-- Paragraph Like/Dislike -->
+                    {% if user.is_authenticated %}
+                    <div class="paragraph-actions mt-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn like-btn {% if paragraph.get_user_like_status:user == True %}btn-success{% else %}btn-outline-success{% endif %}" 
+                                        data-paragraph-id="{{ paragraph.id }}" data-action="like">
+                                    <i class="fas fa-thumbs-up"></i> <span class="like-count">{{ paragraph.like_count }}</span>
+                                </button>
+                                <button type="button" class="btn dislike-btn {% if paragraph.get_user_like_status:user == False %}btn-danger{% else %}btn-outline-danger{% endif %}" 
+                                        data-paragraph-id="{{ paragraph.id }}" data-action="dislike">
+                                    <i class="fas fa-thumbs-down"></i> <span class="dislike-count">{{ paragraph.dislike_count }}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
                     <!-- Paragraph Attachments -->
                     {% if paragraph.attachments.exists %}
                     <div class="paragraph-attachments mt-3">
@@ -324,6 +342,88 @@
                     <i class="fas fa-tag me-1"></i>{{ tag }}
                 </a>
                 {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Article Rating -->
+        <div class="card bg-dark mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-star me-2"></i>Rate this Article
+                </h5>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="rating-display">
+                        {% if average_rating > 0 %}
+                        <div class="d-flex align-items-center">
+                            <div class="stars me-2">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= average_rating %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-muted"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span class="me-2">{{ average_rating|floatformat:1 }}</span>
+                            <small class="text-muted">({{ rating_count }} rating{{ rating_count|pluralize }})</small>
+                        </div>
+                        {% else %}
+                        <span class="text-muted">No ratings yet</span>
+                        {% endif %}
+                    </div>
+                    {% if user.is_authenticated %}
+                    <div class="user-rating">
+                        <div class="btn-group" role="group" aria-label="Rate article">
+                            {% for i in "12345" %}
+                            <button type="button" class="btn btn-sm rating-btn {% if user_rating == forloop.counter %}btn-warning{% else %}btn-outline-warning{% endif %}" 
+                                    data-rating="{{ forloop.counter }}" data-article-id="{{ article.id }}">
+                                {{ forloop.counter }}
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-sm btn-outline-primary">Login to Rate</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Comments Section -->
+        <div class="card bg-dark mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-comments me-2"></i>Comments 
+                    <span class="badge bg-secondary ms-2" id="comment-count">{{ comment_count }}</span>
+                </h5>
+                
+                {% if user.is_authenticated %}
+                <!-- Add Comment Form -->
+                <form id="comment-form" class="mb-4">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea class="form-control" name="content" rows="3" placeholder="Share your thoughts about this article..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-2"></i>Post Comment
+                    </button>
+                </form>
+                {% else %}
+                <div class="text-center mb-4">
+                    <p class="text-muted">Please <a href="{% url 'login' %}">login</a> to leave a comment.</p>
+                </div>
+                {% endif %}
+                
+                <!-- Comments List -->
+                <div id="comments-list">
+                    {% for comment in comments %}
+                        {% include 'partials/comment.html' with comment=comment %}
+                    {% empty %}
+                        <div class="text-center py-3" id="no-comments">
+                            <p class="text-muted mb-0">No comments yet. Be the first to share your thoughts!</p>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
@@ -586,6 +686,236 @@
             console.error('Error:', error);
             alert('Failed to generate share link');
         });
+    }
+
+    // Rating System
+    document.addEventListener('DOMContentLoaded', function() {
+        const ratingButtons = document.querySelectorAll('.rating-btn');
+        ratingButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const rating = this.dataset.rating;
+                const articleId = this.dataset.articleId;
+                
+                fetch(`/article/${articleId}/rate/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: `rating=${rating}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update rating display
+                        updateRatingDisplay(data.average_rating, data.rating_count);
+                        // Update user rating buttons
+                        updateUserRatingButtons(rating);
+                        showShareNotification(data.message);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to submit rating');
+                });
+            });
+        });
+
+        // Comment System
+        const commentForm = document.getElementById('comment-form');
+        if (commentForm) {
+            commentForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const articleId = {{ article.id }};
+                
+                fetch(`/article/${articleId}/comment/`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Add new comment to the list
+                        const commentsList = document.getElementById('comments-list');
+                        const noComments = document.getElementById('no-comments');
+                        if (noComments) {
+                            noComments.remove();
+                        }
+                        commentsList.insertAdjacentHTML('afterbegin', data.comment_html);
+                        
+                        // Update comment count
+                        document.getElementById('comment-count').textContent = data.comment_count;
+                        
+                        // Clear form
+                        this.reset();
+                        showShareNotification('Comment posted successfully!');
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to post comment');
+                });
+            });
+        }
+
+        // Reply functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('reply-btn') || e.target.closest('.reply-btn')) {
+                const btn = e.target.closest('.reply-btn');
+                const commentId = btn.dataset.commentId;
+                const replyForm = document.getElementById(`reply-form-${commentId}`);
+                replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+            }
+            
+            if (e.target.classList.contains('cancel-reply')) {
+                const replyForm = e.target.closest('.reply-form');
+                replyForm.style.display = 'none';
+            }
+        });
+
+        // Reply form submission
+        document.addEventListener('submit', function(e) {
+            if (e.target.classList.contains('comment-reply-form')) {
+                e.preventDefault();
+                const form = e.target;
+                const formData = new FormData(form);
+                const parentId = form.dataset.parentId;
+                formData.append('parent_id', parentId);
+                const articleId = {{ article.id }};
+                
+                fetch(`/article/${articleId}/comment/`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Add reply to the parent comment
+                        const parentComment = form.closest('.comment');
+                        let repliesContainer = parentComment.querySelector('.replies');
+                        if (!repliesContainer) {
+                            repliesContainer = document.createElement('div');
+                            repliesContainer.className = 'replies mt-3 ms-3';
+                            parentComment.appendChild(repliesContainer);
+                        }
+                        repliesContainer.insertAdjacentHTML('beforeend', data.comment_html);
+                        
+                        // Update comment count
+                        document.getElementById('comment-count').textContent = data.comment_count;
+                        
+                        // Hide form and reset
+                        form.closest('.reply-form').style.display = 'none';
+                        form.reset();
+                        showShareNotification('Reply posted successfully!');
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to post reply');
+                });
+            }
+        });
+
+        // Paragraph Like/Dislike System
+        const likeButtons = document.querySelectorAll('.like-btn, .dislike-btn');
+        likeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const paragraphId = this.dataset.paragraphId;
+                const action = this.dataset.action;
+                const isCurrentlyActive = this.classList.contains('btn-success') || this.classList.contains('btn-danger');
+                const finalAction = isCurrentlyActive ? 'remove' : action;
+                
+                fetch(`/paragraph/${paragraphId}/like/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: `action=${finalAction}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateParagraphLikes(paragraphId, data.like_count, data.dislike_count, data.user_action);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to update like/dislike');
+                });
+            });
+        });
+    });
+
+    function updateRatingDisplay(averageRating, ratingCount) {
+        const ratingDisplay = document.querySelector('.rating-display');
+        if (averageRating > 0) {
+            const starsHtml = Array.from({length: 5}, (_, i) => {
+                const isFilled = i < Math.round(averageRating);
+                return `<i class="fa${isFilled ? 's' : 'r'} fa-star ${isFilled ? 'text-warning' : 'text-muted'}"></i>`;
+            }).join('');
+            
+            ratingDisplay.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="stars me-2">${starsHtml}</div>
+                    <span class="me-2">${averageRating}</span>
+                    <small class="text-muted">(${ratingCount} rating${ratingCount !== 1 ? 's' : ''})</small>
+                </div>
+            `;
+        } else {
+            ratingDisplay.innerHTML = '<span class="text-muted">No ratings yet</span>';
+        }
+    }
+
+    function updateUserRatingButtons(selectedRating) {
+        const ratingButtons = document.querySelectorAll('.rating-btn');
+        ratingButtons.forEach(button => {
+            const buttonRating = parseInt(button.dataset.rating);
+            if (buttonRating === parseInt(selectedRating)) {
+                button.classList.remove('btn-outline-warning');
+                button.classList.add('btn-warning');
+            } else {
+                button.classList.remove('btn-warning');
+                button.classList.add('btn-outline-warning');
+            }
+        });
+    }
+
+    function updateParagraphLikes(paragraphId, likeCount, dislikeCount, userAction) {
+        const paragraphElement = document.querySelector(`[data-paragraph-id="${paragraphId}"]`).closest('.paragraph');
+        const likeBtn = paragraphElement.querySelector('.like-btn');
+        const dislikeBtn = paragraphElement.querySelector('.dislike-btn');
+        
+        // Update counts
+        likeBtn.querySelector('.like-count').textContent = likeCount;
+        dislikeBtn.querySelector('.dislike-count').textContent = dislikeCount;
+        
+        // Update button states
+        if (userAction === true) {
+            likeBtn.classList.remove('btn-outline-success');
+            likeBtn.classList.add('btn-success');
+            dislikeBtn.classList.remove('btn-danger');
+            dislikeBtn.classList.add('btn-outline-danger');
+        } else if (userAction === false) {
+            dislikeBtn.classList.remove('btn-outline-danger');
+            dislikeBtn.classList.add('btn-danger');
+            likeBtn.classList.remove('btn-success');
+            likeBtn.classList.add('btn-outline-success');
+        } else {
+            likeBtn.classList.remove('btn-success');
+            likeBtn.classList.add('btn-outline-success');
+            dislikeBtn.classList.remove('btn-danger');
+            dislikeBtn.classList.add('btn-outline-danger');
+        }
     }
 </script>
 {% endblock %}
