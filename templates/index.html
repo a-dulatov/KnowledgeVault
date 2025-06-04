@@ -4,24 +4,16 @@
 
 {% block content %}
 <div class="row mb-5">
-    <div class="col-md-8">
-        <h1 class="display-4 mb-4">Welcome to the Knowledge Base</h1>
-        <p class="lead">Explore our comprehensive collection of articles, guides, and tutorials.</p>
-        <p>Our knowledge base is designed to help you find the information you need quickly and easily. Browse articles by category or use the search function to find specific topics.</p>
+    <div class="col-12">
         <div class="mt-4">
-            <form action="{% url 'search' %}" method="get" class="d-flex">
-                <input class="form-control form-control-lg me-2" type="search" placeholder="What are you looking for?" aria-label="Search" name="q">
-                <button class="btn btn-primary" type="submit">Search</button>
+            <form action="{% url 'search' %}" method="get" class="d-flex justify-content-center">
+                <div class="col-md-6">
+                    <div class="input-group input-group-lg">
+                        <input class="form-control" type="search" placeholder="Search knowledge base..." aria-label="Search" name="q">
+                        <button class="btn btn-primary" type="submit">Search</button>
+                    </div>
+                </div>
             </form>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card bg-dark h-100">
-            <div class="card-body text-center d-flex flex-column justify-content-center">
-                <i class="fas fa-lightbulb fa-5x mb-3 text-warning"></i>
-                <h3>Quick Help</h3>
-                <p>Need assistance? Browse our categories below to find the information you need.</p>
-            </div>
         </div>
     </div>
 </div>
