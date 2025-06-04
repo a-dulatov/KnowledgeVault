@@ -36,7 +36,19 @@
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="spacesDropdown">
                             {% for space in spaces %}
-                            <li><a class="dropdown-item" href="{% url 'space_detail' space_id=space.id %}">{{ space.name }}</a></li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center" href="{% url 'space_detail' space_id=space.id %}">
+                                    {% if space.icon %}
+                                    <i class="{{ space.icon }} me-2"></i>
+                                    {% endif %}
+                                    <div>
+                                        <div>{{ space.name }}</div>
+                                        {% if space.label %}
+                                        <small><span class="badge" style="background-color: {{ space.label.color }}; color: white; font-size: 0.7em;">{{ space.label.name }}</span></small>
+                                        {% endif %}
+                                    </div>
+                                </a>
+                            </li>
                             {% endfor %}
                         </ul>
                     </li>

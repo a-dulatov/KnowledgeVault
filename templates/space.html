@@ -12,7 +12,17 @@
 </nav>
 
 <div class="mb-4">
-    <h1>{{ space.name }}</h1>
+    <div class="d-flex align-items-center mb-3">
+        {% if space.icon %}
+        <i class="{{ space.icon }} me-3" style="font-size: 2rem;"></i>
+        {% endif %}
+        <div>
+            <h1 class="mb-1">{{ space.name }}</h1>
+            {% if space.label %}
+            <span class="badge" style="background-color: {{ space.label.color }}; color: white;">{{ space.label.name }}</span>
+            {% endif %}
+        </div>
+    </div>
     <p class="lead">{{ space.description }}</p>
 </div>
 
@@ -57,7 +67,15 @@
             <div class="col">
                 <div class="card space-card h-100">
                     <div class="card-body">
-                        <h5 class="card-title">{{ other_space.name }}</h5>
+                        <div class="d-flex align-items-center mb-2">
+                            {% if other_space.icon %}
+                            <i class="{{ other_space.icon }} me-2"></i>
+                            {% endif %}
+                            <h5 class="card-title mb-0">{{ other_space.name }}</h5>
+                        </div>
+                        {% if other_space.label %}
+                        <span class="badge mb-2" style="background-color: {{ other_space.label.color }}; color: white;">{{ other_space.label.name }}</span>
+                        {% endif %}
                         <p class="card-text">{{ other_space.description }}</p>
                     </div>
                     <div class="card-footer bg-transparent border-0">

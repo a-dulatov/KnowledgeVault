@@ -32,7 +32,15 @@
         <div class="col">
             <div class="card space-card h-100">
                 <div class="card-body">
-                    <h5 class="card-title">{{ space.name }}</h5>
+                    <div class="d-flex align-items-center mb-2">
+                        {% if space.icon %}
+                        <i class="{{ space.icon }} me-2"></i>
+                        {% endif %}
+                        <h5 class="card-title mb-0">{{ space.name }}</h5>
+                    </div>
+                    {% if space.label %}
+                    <span class="badge mb-2" style="background-color: {{ space.label.color }}; color: white;">{{ space.label.name }}</span>
+                    {% endif %}
                     <p class="card-text">{{ space.description }}</p>
                 </div>
                 <div class="card-footer bg-transparent border-0">
