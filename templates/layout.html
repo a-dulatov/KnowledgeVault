@@ -99,7 +99,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer bg-dark text-light">
+    <footer class="footer">
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
@@ -110,19 +110,19 @@
                     <h5>Categories</h5>
                     <ul class="list-unstyled">
                         {% for category in categories %}
-                        <li><a href="{% url 'category_detail' category_id=category.id %}" class="text-decoration-none link-light">{{ category.name }}</a></li>
+                        <li><a href="{% url 'category_detail' category_id=category.id %}" class="text-decoration-none" style="color: var(--primary-corporate);">{{ category.name }}</a></li>
                         {% endfor %}
                     </ul>
                 </div>
                 <div class="col-md-3">
                     <h5>Links</h5>
                     <ul class="list-unstyled">
-                        <li><a href="{% url 'index' %}" class="text-decoration-none link-light">Home</a></li>
-                        <li><a href="{% url 'search' %}" class="text-decoration-none link-light">Search</a></li>
+                        <li><a href="{% url 'index' %}" class="text-decoration-none" style="color: var(--primary-corporate);">Home</a></li>
+                        <li><a href="{% url 'search' %}" class="text-decoration-none" style="color: var(--primary-corporate);">Search</a></li>
                     </ul>
                 </div>
             </div>
-            <hr>
+            <hr style="border-color: #e9ecef;">
             <div class="text-center">
                 <p>&copy; 2023-2025 Knowledge Base. All rights reserved.</p>
             </div>
