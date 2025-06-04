@@ -159,10 +159,9 @@
         </div>
         
         <!-- Article Summary -->
-        <div class="card bg-dark mb-4">
+        <div class="card mb-4" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
             <div class="card-body">
-                <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Summary</h5>
-                <p class="card-text">{{ article.summary }}</p>
+                <p class="card-text mb-0">{{ article.summary }}</p>
             </div>
         </div>
         
@@ -299,7 +298,7 @@
         
         <!-- Attachments -->
         {% if article.attachments.exists %}
-        <div class="card bg-dark mb-4">
+        <div class="card mb-4" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
             <div class="card-body">
                 <h5 class="card-title"><i class="fas fa-paperclip me-2"></i>Attachments</h5>
                 <div class="row">
