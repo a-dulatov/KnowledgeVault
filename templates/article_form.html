@@ -8,13 +8,95 @@
 {% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-10">
-        <div class="card shadow">
-            <div class="card-header bg-primary bg-gradient text-white">
-                <h4 class="card-title mb-0">{{ title }}</h4>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3 col-md-4">
+            <div class="sticky-top" style="top: 1rem;">
+                <!-- Edit Article Section -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Edit Article</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid">
+                            <button class="btn btn-primary" onclick="scrollToSection('article-form')">
+                                <i class="fas fa-file-alt me-2"></i>Article Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paragraphs List -->
+                {% if article %}
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-list me-2"></i>Paragraphs</h5>
+                        <span class="badge bg-secondary">{{ article.paragraphs.count }}</span>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if article.paragraphs.exists %}
+                        <div id="sidebarParagraphsList" class="sidebar-paragraphs">
+                            {% for paragraph in article.paragraphs.all %}
+                            <div class="paragraph-sidebar-item border-bottom p-3" data-paragraph-id="{{ paragraph.id }}">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-grip-vertical text-muted me-2 drag-handle-sidebar" style="cursor: move;"></i>
+                                    <span class="badge bg-secondary me-2">{{ paragraph.order }}</span>
+                                    <small class="text-muted flex-grow-1">Order</small>
+                                </div>
+                                <div class="paragraph-title mb-2">
+                                    <strong>{{ paragraph.title|truncatechars:30 }}</strong>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <a href="{% url 'edit_paragraph' paragraph_id=paragraph.id %}" 
+                                       class="btn btn-sm btn-outline-primary flex-grow-1">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            onclick="deleteParagraph({{ paragraph.id }}, '{{ paragraph.title }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                {% if paragraph.attachments.exists %}
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-paperclip"></i> 
+                                        {{ paragraph.attachments.count }} file{{ paragraph.attachments.count|pluralize }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center p-3">
+                            <p class="text-muted small mb-0">No paragraphs yet</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Add Paragraph Button -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-grid">
+                            <a href="{% url 'add_paragraph' article_id=article.id %}" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Add Paragraph
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
-            <div class="card-body">
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="col-lg-9 col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary bg-gradient text-white">
+                    <h4 class="card-title mb-0">{{ title }}</h4>
+                </div>
+                <div class="card-body" id="article-form">
                 <form method="post" enctype="multipart/form-data" action="{% if article %}{% url 'edit_article' article_id=article.id %}{% else %}{% url 'create_article' %}{% endif %}">
                     {% csrf_token %}
                     
@@ -104,71 +186,13 @@
                     </div>
                 </form>
                 
-                <!-- Paragraph Management Section (Only for editing) -->
-                {% if article %}
-                <div class="mt-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4>Article Paragraphs</h4>
-                        <a href="{% url 'add_paragraph' article_id=article.id %}" class="btn btn-success">
-                            <i class="fas fa-plus"></i> Add Paragraph
-                        </a>
-                    </div>
-                    
-                    {% if article.paragraphs.exists %}
-                    <div id="paragraphsList" class="sortable-paragraphs">
-                        {% for paragraph in article.paragraphs.all %}
-                        <div class="card mb-3 paragraph-item" data-paragraph-id="{{ paragraph.id }}">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-grip-vertical text-muted me-2 drag-handle" style="cursor: move;"></i>
-                                    <h6 class="mb-0">{{ paragraph.title }}</h6>
-                                    <span class="badge bg-secondary ms-2">Order: {{ paragraph.order }}</span>
-                                </div>
-                                <div>
-                                    <a href="{% url 'edit_paragraph' paragraph_id=paragraph.id %}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" 
-                                            onclick="deleteParagraph({{ paragraph.id }}, '{{ paragraph.title }}')">
-                                        <i class="fas fa-trash"></i> Delete
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="paragraph-content">
-                                    {{ paragraph.content|safe|truncatewords:20 }}
-                                </div>
-                                {% if paragraph.attachments.exists %}
-                                <div class="mt-2">
-                                    <small class="text-muted">
-                                        <i class="fas fa-paperclip"></i> 
-                                        {{ paragraph.attachments.count }} attachment{{ paragraph.attachments.count|pluralize }}
-                                    </small>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="text-center py-4">
-                        <p class="text-muted">No paragraphs added yet.</p>
-                        <a href="{% url 'add_paragraph' article_id=article.id %}" class="btn btn-primary">
-                            Add First Paragraph
-                        </a>
-                    </div>
-                    {% endif %}
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger mt-3">
+                    {% for error in form.non_field_errors %}
+                    {{ error }}
+                    {% endfor %}
                 </div>
                 {% endif %}
-                    
-                    {% if form.non_field_errors %}
-                    <div class="alert alert-danger mt-3">
-                        {% for error in form.non_field_errors %}
-                        {{ error }}
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </form>
             </div>
         </div>
     </div>
@@ -219,6 +243,14 @@ function deleteParagraph(paragraphId, paragraphTitle) {
     }
 }
 
+// Scroll to section function
+function scrollToSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
 // Initialize sortable paragraphs and other functionality
 document.addEventListener('DOMContentLoaded', function() {
     // File input enhancement
@@ -233,18 +265,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Initialize sortable for paragraphs (only if editing an article)
-    const paragraphsList = document.getElementById('paragraphsList');
-    if (paragraphsList) {
-        let sortable = Sortable.create(paragraphsList, {
-            handle: '.drag-handle',
+    // Initialize sortable for sidebar paragraphs (only if editing an article)
+    const sidebarParagraphsList = document.getElementById('sidebarParagraphsList');
+    if (sidebarParagraphsList) {
+        let sortable = Sortable.create(sidebarParagraphsList, {
+            handle: '.drag-handle-sidebar',
             animation: 150,
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',
             dragClass: 'sortable-drag',
             onEnd: function(evt) {
                 // Update paragraph order
-                updateParagraphOrder();
+                updateSidebarParagraphOrder();
             }
         });
         
@@ -260,19 +292,22 @@ document.addEventListener('DOMContentLoaded', function() {
             .sortable-drag {
                 opacity: 0.8;
             }
-            .paragraph-item {
+            .paragraph-sidebar-item {
                 transition: all 0.2s ease;
             }
-            .paragraph-item:hover {
-                box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            .paragraph-sidebar-item:hover {
+                background-color: var(--bs-light);
+            }
+            .paragraph-sidebar-item:last-child {
+                border-bottom: none !important;
             }
         `;
         document.head.appendChild(style);
     }
 });
 
-function updateParagraphOrder() {
-    const paragraphItems = document.querySelectorAll('.paragraph-item');
+function updateSidebarParagraphOrder() {
+    const paragraphItems = document.querySelectorAll('.paragraph-sidebar-item');
     const paragraphOrders = [];
     
     paragraphItems.forEach((item, index) => {
@@ -285,7 +320,7 @@ function updateParagraphOrder() {
         // Update the order badge
         const orderBadge = item.querySelector('.badge');
         if (orderBadge) {
-            orderBadge.textContent = `Order: ${index + 1}`;
+            orderBadge.textContent = index + 1;
         }
     });
     
@@ -307,7 +342,6 @@ function updateParagraphOrder() {
     .then(data => {
         if (!data.success) {
             console.error('Failed to update paragraph order:', data.error);
-            // Optionally show a user-friendly error message
             alert('Failed to update paragraph order. Please try again.');
         }
     })
