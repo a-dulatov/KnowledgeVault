@@ -32,6 +32,30 @@ class Article(models.Model):
     def content(self):
         """Backward compatibility property that combines all paragraph content"""
         return "".join([paragraph.content for paragraph in self.paragraphs.all().order_by('order')])
+    
+    def average_rating(self):
+        """Calculate average rating for this article"""
+        ratings = self.ratings.all()
+        if not ratings:
+            return 0
+        return sum(r.rating for r in ratings) / len(ratings)
+    
+    def rating_count(self):
+        """Get total number of ratings"""
+        return self.ratings.count()
+    
+    def get_user_rating(self, user):
+        """Get rating by specific user"""
+        if not user.is_authenticated:
+            return None
+        try:
+            return self.ratings.get(user=user).rating
+        except ArticleRating.DoesNotExist:
+            return None
+    
+    def comment_count(self):
+        """Get total number of approved comments"""
+        return self.comments.filter(is_approved=True, parent__isnull=True).count()
 
 
 class ArticleParagraph(models.Model):
@@ -47,6 +71,23 @@ class ArticleParagraph(models.Model):
         
     def __str__(self):
         return f"{self.article.title} - {self.title}"
+    
+    def like_count(self):
+        """Get number of likes for this paragraph"""
+        return self.likes.filter(is_like=True).count()
+    
+    def dislike_count(self):
+        """Get number of dislikes for this paragraph"""
+        return self.likes.filter(is_like=False).count()
+    
+    def get_user_like_status(self, user):
+        """Get user's like status for this paragraph (True=like, False=dislike, None=no action)"""
+        if not user.is_authenticated:
+            return None
+        try:
+            return self.likes.get(user=user).is_like
+        except ParagraphLike.DoesNotExist:
+            return None
 
 
 class ParagraphAttachment(models.Model):
@@ -240,3 +281,70 @@ class ShareLinkView(models.Model):
     
     def __str__(self):
         return f"View of {self.share_link.article.title} at {self.viewed_at}"
+
+
+class ArticleRating(models.Model):
+    """User ratings for articles (1-5 stars)"""
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='ratings')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='article_ratings')
+    rating = models.PositiveIntegerField(choices=[(i, f"{i} star{'s' if i != 1 else ''}") for i in range(1, 6)])
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['article', 'user']
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['article', '-created_at']),
+            models.Index(fields=['user', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} rated {self.article.title}: {self.rating}/5"
+
+
+class ArticleComment(models.Model):
+    """Comments on articles"""
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='article_comments')
+    content = models.TextField()
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+    is_approved = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['article', '-created_at']),
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['parent']),
+        ]
+    
+    def __str__(self):
+        return f"Comment by {self.user.username} on {self.article.title}"
+    
+    def get_replies(self):
+        """Get approved replies to this comment"""
+        return self.replies.filter(is_approved=True).order_by('created_at')
+
+
+class ParagraphLike(models.Model):
+    """Like/dislike for individual paragraphs"""
+    paragraph = models.ForeignKey(ArticleParagraph, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='paragraph_likes')
+    is_like = models.BooleanField()  # True for like, False for dislike
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['paragraph', 'user']
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['paragraph', 'is_like']),
+            models.Index(fields=['user', '-created_at']),
+        ]
+    
+    def __str__(self):
+        action = "liked" if self.is_like else "disliked"
+        return f"{self.user.username} {action} paragraph: {self.paragraph.title}"
