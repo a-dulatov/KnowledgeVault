@@ -449,3 +449,171 @@ def delete_paragraph_attachment(request, attachment_id):
             return redirect('article_detail', article_id=article.id)
     
     return redirect('article_detail', article_id=article.id)
+
+
+def export_article_pdf(request, article_id):
+    """Export article to PDF format"""
+    article = get_object_or_404(Article, id=article_id)
+    
+    # Prepare context for PDF template
+    context = {
+        'article': article,
+        'paragraphs': article.paragraphs.all().order_by('order'),
+        'export_date': timezone.now(),
+    }
+    
+    # Render HTML template for PDF
+    html_string = render_to_string('article_pdf.html', context, request)
+    
+    # Create PDF
+    font_config = FontConfiguration()
+    css = CSS(string='''
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .article-title {
+            color: #007bff;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .article-meta {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+        .paragraph {
+            margin-bottom: 30px;
+        }
+        .paragraph-title {
+            color: #495057;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-left: 4px solid #007bff;
+            padding-left: 10px;
+        }
+        .paragraph-content {
+            text-align: justify;
+        }
+        .attachments {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .attachment-list {
+            list-style: none;
+            padding: 0;
+        }
+        .attachment-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .attachment-item:last-child {
+            border-bottom: none;
+        }
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    ''', font_config=font_config)
+    
+    html = HTML(string=html_string, base_url=request.build_absolute_uri())
+    pdf = html.write_pdf(stylesheets=[css], font_config=font_config)
+    
+    # Create response
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{article.title}.pdf"'
+    
+    return response
+
+
+def export_article_markdown(request, article_id):
+    """Export article to Markdown format"""
+    article = get_object_or_404(Article, id=article_id)
+    paragraphs = article.paragraphs.all().order_by('order')
+    
+    # Generate Markdown content
+    markdown_content = []
+    
+    # Article header
+    markdown_content.append(f"# {article.title}\n")
+    markdown_content.append(f"**Category:** {article.category.name}\n")
+    markdown_content.append(f"**Created:** {article.created_at.strftime('%Y-%m-%d')}\n")
+    markdown_content.append(f"**Updated:** {article.updated_at.strftime('%Y-%m-%d')}\n")
+    
+    if article.tags:
+        tags = ', '.join(article.tags)
+        markdown_content.append(f"**Tags:** {tags}\n")
+    
+    markdown_content.append("\n---\n")
+    
+    # Article summary
+    if article.summary:
+        markdown_content.append("## Summary\n")
+        markdown_content.append(f"{article.summary}\n\n")
+    
+    # Article paragraphs
+    for paragraph in paragraphs:
+        markdown_content.append(f"## {paragraph.title}\n")
+        
+        # Clean HTML and convert to markdown-friendly format
+        clean_content = bleach.clean(
+            paragraph.content,
+            tags=['p', 'br', 'strong', 'em', 'u', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote'],
+            strip=True
+        )
+        
+        # Simple HTML to Markdown conversion
+        clean_content = clean_content.replace('<strong>', '**').replace('</strong>', '**')
+        clean_content = clean_content.replace('<em>', '*').replace('</em>', '*')
+        clean_content = clean_content.replace('<code>', '`').replace('</code>', '`')
+        clean_content = clean_content.replace('<pre>', '```\n').replace('</pre>', '\n```')
+        clean_content = clean_content.replace('<p>', '').replace('</p>', '\n\n')
+        clean_content = clean_content.replace('<br>', '\n')
+        clean_content = clean_content.replace('<br/>', '\n')
+        clean_content = clean_content.replace('<br />', '\n')
+        
+        markdown_content.append(f"{clean_content}\n")
+        
+        # Add attachments if any
+        if paragraph.attachments.exists():
+            markdown_content.append("### Attachments\n")
+            for attachment in paragraph.attachments.all():
+                attachment_url = request.build_absolute_uri(attachment.file.url)
+                markdown_content.append(f"- [{attachment.original_name}]({attachment_url})\n")
+            markdown_content.append("\n")
+    
+    # Article-level attachments
+    if article.attachments.exists():
+        markdown_content.append("## Article Attachments\n")
+        for attachment in article.attachments.all():
+            attachment_url = request.build_absolute_uri(attachment.file.url)
+            markdown_content.append(f"- [{attachment.original_name}]({attachment_url})\n")
+        markdown_content.append("\n")
+    
+    # Join all content
+    final_content = ''.join(markdown_content)
+    
+    # Create response
+    response = HttpResponse(final_content, content_type='text/markdown')
+    response['Content-Disposition'] = f'attachment; filename="{article.title}.md"'
+    
+    return response

@@ -17,6 +17,10 @@ urlpatterns = [
     path('article/<int:article_id>/edit/', views.edit_article, name='edit_article'),
     path('attachment/<int:attachment_id>/delete/', views.delete_attachment, name='delete_attachment'),
     
+    # Export functionality
+    path('article/<int:article_id>/export/pdf/', views.export_article_pdf, name='export_article_pdf'),
+    path('article/<int:article_id>/export/markdown/', views.export_article_markdown, name='export_article_markdown'),
+    
     # Paragraph management
     path('article/<int:article_id>/paragraph/add/', views.add_paragraph, name='add_paragraph'),
     path('paragraph/<int:paragraph_id>/edit/', views.edit_paragraph, name='edit_paragraph'),

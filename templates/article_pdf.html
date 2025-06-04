@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ article.title }} - Knowledge Base Export</title>
+</head>
+<body>
+    <div class="header">
+        <h1 class="article-title">{{ article.title }}</h1>
+        <div class="article-meta">
+            <strong>Category:</strong> {{ article.category.name }}<br>
+            <strong>Created:</strong> {{ article.created_at|date:"F d, Y" }}<br>
+            <strong>Updated:</strong> {{ article.updated_at|date:"F d, Y" }}<br>
+            {% if article.tags %}
+            <strong>Tags:</strong> {{ article.tags|join:", " }}<br>
+            {% endif %}
+            <strong>Exported:</strong> {{ export_date|date:"F d, Y H:i" }}
+        </div>
+    </div>
+
+    {% if article.summary %}
+    <div class="summary">
+        <h2>Summary</h2>
+        <p>{{ article.summary }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Article Paragraphs -->
+    {% for paragraph in paragraphs %}
+    <div class="paragraph">
+        <h2 class="paragraph-title">{{ paragraph.title }}</h2>
+        <div class="paragraph-content">
+            {{ paragraph.content|safe }}
+        </div>
+        
+        {% if paragraph.attachments.exists %}
+        <div class="attachments">
+            <h3>Attachments for this section:</h3>
+            <ul class="attachment-list">
+                {% for attachment in paragraph.attachments.all %}
+                <li class="attachment-item">
+                    <strong>{{ attachment.original_name }}</strong>
+                    <br><small>Uploaded: {{ attachment.uploaded_at|date:"F d, Y" }}
+                    {% if attachment.file_size %} | Size: {{ attachment.file_size|filesizeformat }}{% endif %}</small>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- Article-level Attachments -->
+    {% if article.attachments.exists %}
+    <div class="attachments">
+        <h2>Article Attachments</h2>
+        <ul class="attachment-list">
+            {% for attachment in article.attachments.all %}
+            <li class="attachment-item">
+                <strong>{{ attachment.original_name }}</strong>
+                <br><small>Uploaded: {{ attachment.uploaded_at|date:"F d, Y" }}
+                {% if attachment.file_size %} | Size: {{ attachment.file_size|filesizeformat }}{% endif %}</small>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 12px; color: #666;">
+        <p>This document was exported from the Knowledge Base on {{ export_date|date:"F d, Y \a\t H:i" }}.</p>
+    </div>
+</body>
+</html>
