@@ -1,0 +1,307 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .share-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .share-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .share-link-section {
+        background: var(--bs-dark);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .share-url-container {
+        position: relative;
+    }
+    
+    .share-url {
+        font-family: 'Monaco', 'Consolas', monospace;
+        word-break: break-all;
+        background: var(--bs-gray-900);
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid var(--bs-gray-700);
+    }
+    
+    .social-share-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .social-share-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .social-share-btn:hover {
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    
+    .qr-code-container {
+        text-align: center;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        margin: 20px 0;
+    }
+    
+    .expiry-info {
+        background: var(--bs-warning);
+        color: var(--bs-dark);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .paragraph-preview {
+        background: var(--bs-gray-800);
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid var(--bs-primary);
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="share-container">
+        <!-- Header -->
+        <div class="share-header">
+            <h1><i class="fas fa-share-alt me-3"></i>Share Paragraph</h1>
+            <p class="mb-0">Generate a secure link to share this specific section</p>
+        </div>
+
+        <!-- Paragraph Preview -->
+        <div class="paragraph-preview">
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'category_detail' category_id=article.category.id %}" class="text-decoration-none">
+                            {{ article.category.name }}
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'article_detail' article_id=article.id %}" class="text-decoration-none">
+                            {{ article.title }}
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ paragraph.title }}</li>
+                </ol>
+            </nav>
+            
+            <h3>{{ paragraph.title }}</h3>
+            <div class="paragraph-content mt-3">
+                {{ paragraph.content|safe|truncatewords:50 }}
+                {% if paragraph.content|wordcount > 50 %}
+                <p class="text-muted mt-2">
+                    <em>This is a preview. The full content will be available via the share link.</em>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Share Link Section -->
+        <div class="share-link-section">
+            <h4><i class="fas fa-link me-2"></i>Secure Share Link</h4>
+            <p class="text-muted">This link provides access to only this specific paragraph</p>
+            
+            <!-- Expiry Information -->
+            <div class="expiry-info">
+                <i class="fas fa-clock me-2"></i>
+                <strong>Link expires:</strong> {{ share_link.expires_at|date:"F d, Y \a\t g:i A" }}
+                <small class="d-block mt-1">
+                    Valid for {{ settings.link_expiry_hours }} hours from creation
+                </small>
+            </div>
+
+            <!-- Share URL -->
+            <div class="share-url-container">
+                <label class="form-label fw-bold">Share URL:</label>
+                <div class="input-group">
+                    <input type="text" class="form-control share-url" value="{{ secure_url }}" id="shareUrl" readonly>
+                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard()">
+                        <i class="fas fa-copy me-1"></i>Copy
+                    </button>
+                </div>
+            </div>
+
+            <!-- QR Code -->
+            <div class="qr-code-container">
+                <h6 class="text-dark mb-3">QR Code</h6>
+                <canvas id="qr-code" class="mx-auto d-block"></canvas>
+                <p class="text-muted small mt-2">Scan with mobile device to open share link</p>
+            </div>
+        </div>
+
+        <!-- Social Media Sharing -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-share me-2"></i>Share on Social Media</h5>
+            </div>
+            <div class="card-body">
+                <div class="social-share-grid">
+                    <a href="{{ share_urls.twitter }}" target="_blank" class="social-share-btn text-white" style="background-color: #1da1f2;">
+                        <i class="fab fa-twitter me-2"></i>Twitter
+                    </a>
+                    <a href="{{ share_urls.facebook }}" target="_blank" class="social-share-btn text-white" style="background-color: #4267b2;">
+                        <i class="fab fa-facebook me-2"></i>Facebook
+                    </a>
+                    <a href="{{ share_urls.linkedin }}" target="_blank" class="social-share-btn text-white" style="background-color: #0077b5;">
+                        <i class="fab fa-linkedin me-2"></i>LinkedIn
+                    </a>
+                    <a href="{{ share_urls.reddit }}" target="_blank" class="social-share-btn text-white" style="background-color: #ff4500;">
+                        <i class="fab fa-reddit me-2"></i>Reddit
+                    </a>
+                    <a href="{{ share_urls.telegram }}" target="_blank" class="social-share-btn text-white" style="background-color: #0088cc;">
+                        <i class="fab fa-telegram me-2"></i>Telegram
+                    </a>
+                    <a href="{{ share_urls.whatsapp }}" target="_blank" class="social-share-btn text-white" style="background-color: #25d366;">
+                        <i class="fab fa-whatsapp me-2"></i>WhatsApp
+                    </a>
+                    <a href="{{ share_urls.email }}" class="social-share-btn text-white" style="background-color: #6c757d;">
+                        <i class="fas fa-envelope me-2"></i>Email
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Share Settings -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Share Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Generate New Link</h6>
+                        <p class="text-muted small">Create a new link with custom expiry time</p>
+                        <div class="input-group mb-3">
+                            <input type="number" class="form-control" id="customHours" placeholder="Hours" min="1" max="8760" value="{{ settings.link_expiry_hours }}">
+                            <button class="btn btn-primary" onclick="generateNewLink()">
+                                <i class="fas fa-plus me-1"></i>Generate
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Link Statistics</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-eye me-2"></i>Views: <strong>{{ share_link.view_count }}</strong></li>
+                            <li><i class="fas fa-calendar me-2"></i>Created: <strong>{{ share_link.created_at|date:"M d, Y g:i A" }}</strong></li>
+                            {% if share_link.last_accessed %}
+                            <li><i class="fas fa-clock me-2"></i>Last accessed: <strong>{{ share_link.last_accessed|date:"M d, Y g:i A" }}</strong></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="text-center mt-4">
+            <a href="{% url 'article_detail' article_id=article.id %}" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left me-2"></i>Back to Article
+            </a>
+            <a href="{% url 'share_article' article_id=article.id %}" class="btn btn-outline-primary">
+                <i class="fas fa-share me-2"></i>Share Full Article
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Generate QR Code
+    const qr = new QRious({
+        element: document.getElementById('qr-code'),
+        value: '{{ secure_url }}',
+        size: 200,
+        level: 'M'
+    });
+});
+
+function copyToClipboard() {
+    const shareUrl = document.getElementById('shareUrl');
+    shareUrl.select();
+    shareUrl.setSelectionRange(0, 99999);
+    
+    navigator.clipboard.writeText(shareUrl.value).then(function() {
+        // Show success feedback
+        const button = event.target.closest('button');
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+        button.classList.remove('btn-outline-secondary');
+        button.classList.add('btn-success');
+        
+        setTimeout(function() {
+            button.innerHTML = originalHTML;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-secondary');
+        }, 2000);
+    }).catch(function(err) {
+        console.error('Could not copy text: ', err);
+        // Fallback for older browsers
+        document.execCommand('copy');
+    });
+}
+
+function generateNewLink() {
+    const hours = document.getElementById('customHours').value;
+    if (!hours || hours < 1 || hours > 8760) {
+        alert('Please enter a valid number of hours (1-8760)');
+        return;
+    }
+    
+    const url = new URL('{% url "generate_paragraph_share_link" paragraph_id=paragraph.id %}', window.location.origin);
+    url.searchParams.append('hours', hours);
+    
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the page with new link
+            location.reload();
+        } else {
+            alert('Error generating new link: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to generate new link');
+    });
+}
+</script>
+{% endblock %}

@@ -64,8 +64,13 @@
 <div class="container py-4">
     <!-- Shared Article Header -->
     <div class="shared-header text-center">
+        {% if is_paragraph_share %}
+        <h2><i class="fas fa-share-alt me-2"></i>Shared Section</h2>
+        <p class="mb-0">A specific section from "{{ article.title }}" was shared with you via a secure link</p>
+        {% else %}
         <h2><i class="fas fa-share-alt me-2"></i>Shared Article</h2>
         <p class="mb-0">This article was shared with you via a secure link</p>
+        {% endif %}
     </div>
 
     <!-- Expiry Warning -->
@@ -76,8 +81,38 @@
 
     <div class="row">
         <div class="col-lg-10 mx-auto">
-            <!-- Article Header -->
+            <!-- Article/Paragraph Header -->
             <div class="article-header">
+                {% if is_paragraph_share %}
+                <!-- Paragraph-specific view -->
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item text-muted">{{ article.category.name }}</li>
+                        <li class="breadcrumb-item text-muted">{{ article.title }}</li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ paragraph.title }}</li>
+                    </ol>
+                </nav>
+                
+                <h1>{{ paragraph.title }}</h1>
+                
+                <div class="article-metadata">
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-book me-2"></i>From article: <strong>{{ article.title }}</strong>
+                    </p>
+                    <div class="d-flex justify-content-between flex-wrap">
+                        <div>
+                            <span class="me-3"><i class="far fa-calendar-alt me-1"></i> Published: {{ article.created_at }}</span>
+                            {% if article.author %}
+                            <span><i class="fas fa-user me-1"></i> Author: {{ article.author.username }}</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <span class="badge bg-primary">{{ article.category.name }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Full article view -->
                 <h1>{{ article.title }}</h1>
                 
                 <div class="article-metadata d-flex justify-content-between flex-wrap">
@@ -91,20 +126,61 @@
                         {% endif %}
                     </div>
                     <div>
-                        <a href="{% url 'category_detail' category_id=article.category.id %}" class="badge bg-primary text-decoration-none">
-                            {{ article.category.name }}
-                        </a>
+                        <span class="badge bg-primary">{{ article.category.name }}</span>
                     </div>
                 </div>
+                {% endif %}
             </div>
             
+            <!-- Content based on share type -->
+            {% if is_paragraph_share %}
+            <!-- Single paragraph content -->
+            <div class="alert alert-primary mb-4">
+                <i class="fas fa-info-circle me-2"></i>
+                You're viewing a specific section of this article via a secure share link.
+            </div>
+            
+            <div class="paragraph-content mb-4">
+                {{ paragraph.content|safe }}
+            </div>
+            
+            <!-- Paragraph Attachments -->
+            {% if paragraph.attachments.exists %}
+            <div class="paragraph-attachments mb-4">
+                <h5><i class="fas fa-paperclip me-2"></i>Attachments</h5>
+                <div class="row">
+                    {% for attachment in paragraph.attachments.all %}
+                    <div class="col-md-6 mb-2">
+                        <div class="d-flex align-items-center p-2 border rounded">
+                            <i class="fas fa-file me-2 text-primary"></i>
+                            <div>
+                                <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none">
+                                    {{ attachment.original_name }}
+                                </a>
+                                <div class="small text-muted">
+                                    Uploaded: {{ attachment.uploaded_at|date:"M d, Y" }}
+                                    {% if attachment.file_size %}
+                                    | Size: {{ attachment.file_size|filesizeformat }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+            <!-- Full article content -->
             <!-- Article Summary -->
+            {% if article.summary %}
             <div class="card bg-dark mb-4">
                 <div class="card-body">
                     <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Summary</h5>
                     <p class="card-text">{{ article.summary }}</p>
                 </div>
             </div>
+            {% endif %}
             
             <!-- Article Content - Paragraphs -->
             <div class="article-content mb-4">

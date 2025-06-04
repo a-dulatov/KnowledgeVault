@@ -739,13 +739,26 @@ def shared_article(request, token):
         
         article = share_link.article
         
-        context = {
-            'article': article,
-            'share_link': share_link,
-            'is_shared_view': True,
-            'expires_at': share_link.expires_at,
-            'title': article.title
-        }
+        # Check if this is a paragraph-specific share link
+        if share_link.paragraph:
+            context = {
+                'article': article,
+                'paragraph': share_link.paragraph,
+                'share_link': share_link,
+                'is_shared_view': True,
+                'is_paragraph_share': True,
+                'expires_at': share_link.expires_at,
+                'title': f"{share_link.paragraph.title} - {article.title}"
+            }
+        else:
+            context = {
+                'article': article,
+                'share_link': share_link,
+                'is_shared_view': True,
+                'is_paragraph_share': False,
+                'expires_at': share_link.expires_at,
+                'title': article.title
+            }
         
         return render(request, 'shared_article.html', context)
         
@@ -795,3 +808,77 @@ def generate_share_link(request, article_id):
         'expires_at': share_link.expires_at.isoformat(),
         'view_count': share_link.view_count
     })
+
+
+def generate_paragraph_share_link(request, paragraph_id):
+    """Generate a new secure share link for a specific paragraph"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+    
+    paragraph = get_object_or_404(ArticleParagraph, id=paragraph_id)
+    
+    # Get custom expiry hours from request
+    custom_hours = request.GET.get('hours')
+    if custom_hours:
+        try:
+            custom_hours = int(custom_hours)
+            if custom_hours <= 0 or custom_hours > 8760:  # Max 1 year
+                custom_hours = None
+        except ValueError:
+            custom_hours = None
+    
+    # Create new share link for paragraph
+    share_link = SecureShareLink.create_for_paragraph(paragraph, request.user, custom_hours)
+    
+    # Build secure URL
+    secure_url = request.build_absolute_uri(reverse('shared_article', args=[share_link.token]))
+    
+    return JsonResponse({
+        'success': True,
+        'token': share_link.token,
+        'url': secure_url,
+        'expires_at': share_link.expires_at.isoformat(),
+        'view_count': share_link.view_count,
+        'paragraph_title': paragraph.title
+    })
+
+
+def share_paragraph(request, paragraph_id):
+    """Paragraph sharing page with secure time-limited links"""
+    paragraph = get_object_or_404(ArticleParagraph, id=paragraph_id)
+    article = paragraph.article
+    
+    # Create or get existing secure share link for this paragraph
+    user = request.user if request.user.is_authenticated else None
+    share_link = SecureShareLink.create_for_paragraph(paragraph, user)
+    
+    # Build secure sharing URL
+    secure_url = request.build_absolute_uri(reverse('shared_article', args=[share_link.token]))
+    encoded_url = urllib.parse.quote(secure_url)
+    encoded_title = urllib.parse.quote(f"{paragraph.title} - {article.title}")
+    encoded_summary = urllib.parse.quote(strip_tags(paragraph.content)[:160])
+    
+    share_urls = {
+        'twitter': f"https://twitter.com/intent/tweet?text={encoded_title}&url={encoded_url}",
+        'facebook': f"https://www.facebook.com/sharer/sharer.php?u={encoded_url}",
+        'linkedin': f"https://www.linkedin.com/sharing/share-offsite/?url={encoded_url}",
+        'reddit': f"https://reddit.com/submit?url={encoded_url}&title={encoded_title}",
+        'telegram': f"https://t.me/share/url?url={encoded_url}&text={encoded_title}",
+        'whatsapp': f"https://wa.me/?text={encoded_title}%20{encoded_url}",
+        'email': f"mailto:?subject={encoded_title}&body=Check out this content: {encoded_url}"
+    }
+    
+    # Get share settings
+    settings = ShareSettings.get_settings()
+    
+    context = {
+        'paragraph': paragraph,
+        'article': article,
+        'share_link': share_link,
+        'secure_url': secure_url,
+        'share_urls': share_urls,
+        'settings': settings,
+        'title': f'Share: {paragraph.title}'
+    }
+    
+    return render(request, 'share_paragraph.html', context)
