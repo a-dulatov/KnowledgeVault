@@ -246,7 +246,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <script>
 // Copy URL to clipboard
 function copyToClipboard() {
@@ -277,17 +277,25 @@ function copyToClipboard() {
 // Generate QR Code
 function updateQRCode(url) {
     const qrContainer = document.getElementById('qrcode');
-    QRCode.toCanvas(qrContainer, url, {
-        width: 200,
-        height: 200,
-        colorDark: '#000000',
-        colorLight: '#ffffff',
-        margin: 2
-    }, function(error) {
-        if (error) {
-            qrContainer.innerHTML = '<p class="text-muted">QR code could not be generated</p>';
-        }
-    });
+    qrContainer.innerHTML = ''; // Clear existing content
+    
+    try {
+        // Create canvas element for QR code
+        const canvas = document.createElement('canvas');
+        qrContainer.appendChild(canvas);
+        
+        // Generate QR code using QRious
+        const qr = new QRious({
+            element: canvas,
+            value: url,
+            size: 200,
+            background: 'white',
+            foreground: 'black'
+        });
+    } catch (error) {
+        console.error('QR Code generation error:', error);
+        qrContainer.innerHTML = '<p class="text-muted">QR code could not be generated</p>';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
