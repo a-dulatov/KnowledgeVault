@@ -486,7 +486,55 @@
         document.querySelectorAll('pre code').forEach((block) => {
             hljs.highlightBlock(block);
         });
+        
+        // Table of Contents functionality
+        initTableOfContents();
     });
+    
+    function initTableOfContents() {
+        const tocLinks = document.querySelectorAll('.toc-link');
+        const paragraphSections = document.querySelectorAll('.paragraph-section');
+        
+        // Smooth scrolling for TOC links
+        tocLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Active section highlighting on scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.id;
+                    const correspondingLink = document.querySelector(`.toc-link[href="#${id}"]`);
+                    
+                    // Remove active class from all links
+                    tocLinks.forEach(link => link.classList.remove('active'));
+                    
+                    // Add active class to current link
+                    if (correspondingLink) {
+                        correspondingLink.classList.add('active');
+                    }
+                }
+            });
+        }, {
+            rootMargin: '-20% 0px -70% 0px'
+        });
+        
+        // Observe all paragraph sections
+        paragraphSections.forEach(section => {
+            observer.observe(section);
+        });
+    }
 
     function deleteAttachment(attachmentId, fileName) {
         if (confirm(`Are you sure you want to delete "${fileName}"? This action cannot be undone.`)) {
