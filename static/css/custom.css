@@ -26,21 +26,22 @@ body {
 
 /* Navigation Styling */
 .navbar-brand {
-    color: #ffffff !important;
+    color: var(--primary-corporate) !important;
     font-weight: 600;
     font-size: 1.3rem;
 }
 
 .navbar-nav .nav-link {
-    color: #ffffff !important;
+    color: var(--text-corporate) !important;
     font-weight: 500;
     padding: 0.5rem 1rem !important;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    border-radius: 4px;
 }
 
 .navbar-nav .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
+    background-color: var(--light-corporate);
+    color: var(--primary-corporate) !important;
 }
 
 /* Button Styling */
@@ -338,9 +339,10 @@ body {
 .footer {
     margin-top: 4rem;
     padding: 2rem 0;
-    background-color: var(--primary-corporate);
-    color: #ffffff;
-    border-top: 3px solid var(--accent-corporate);
+    background-color: #ffffff;
+    color: var(--text-corporate);
+    border-top: 2px solid #e9ecef;
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
 }
 
 /* Responsive Adjustments */
