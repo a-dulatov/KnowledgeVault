@@ -969,42 +969,45 @@ def comment_article(request, article_id):
 @login_required
 def like_paragraph(request, paragraph_id):
     """Like or dislike a paragraph"""
-    if request.method == 'POST':
-        paragraph = get_object_or_404(ArticleParagraph, pk=paragraph_id)
-        action = request.POST.get('action')  # 'like', 'dislike', or 'remove'
-        
-        try:
-            existing_like = ParagraphLike.objects.get(paragraph=paragraph, user=request.user)
-            
-            if action == 'remove':
-                existing_like.delete()
-                user_action = None
-            elif action == 'like':
-                existing_like.is_like = True
-                existing_like.save()
-                user_action = True
-            elif action == 'dislike':
-                existing_like.is_like = False
-                existing_like.save()
-                user_action = False
-            else:
-                return JsonResponse({'success': False, 'error': 'Invalid action'})
-                
-        except ParagraphLike.DoesNotExist:
-            if action == 'like':
-                ParagraphLike.objects.create(paragraph=paragraph, user=request.user, is_like=True)
-                user_action = True
-            elif action == 'dislike':
-                ParagraphLike.objects.create(paragraph=paragraph, user=request.user, is_like=False)
-                user_action = False
-            else:
-                user_action = None
-        
-        return JsonResponse({
-            'success': True,
-            'like_count': paragraph.like_count(),
-            'dislike_count': paragraph.dislike_count(),
-            'user_action': user_action
-        })
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
     
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Authentication required'})
+    
+    paragraph = get_object_or_404(ArticleParagraph, pk=paragraph_id)
+    action = request.POST.get('action')  # 'like', 'dislike', or 'remove'
+    
+    try:
+        existing_like = ParagraphLike.objects.get(paragraph=paragraph, user=request.user)
+        
+        if action == 'remove':
+            existing_like.delete()
+            user_action = None
+        elif action == 'like':
+            existing_like.is_like = True
+            existing_like.save()
+            user_action = True
+        elif action == 'dislike':
+            existing_like.is_like = False
+            existing_like.save()
+            user_action = False
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid action'})
+            
+    except ParagraphLike.DoesNotExist:
+        if action == 'like':
+            ParagraphLike.objects.create(paragraph=paragraph, user=request.user, is_like=True)
+            user_action = True
+        elif action == 'dislike':
+            ParagraphLike.objects.create(paragraph=paragraph, user=request.user, is_like=False)
+            user_action = False
+        else:
+            user_action = None
+    
+    return JsonResponse({
+        'success': True,
+        'like_count': paragraph.like_count(),
+        'dislike_count': paragraph.dislike_count(),
+        'user_action': user_action
+    })
