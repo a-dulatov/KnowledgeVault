@@ -6,7 +6,7 @@ import secrets
 import hashlib
 from datetime import timedelta
 
-class Category(models.Model):
+class Space(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     
@@ -14,12 +14,12 @@ class Category(models.Model):
         return self.name
     
     class Meta:
-        verbose_name_plural = "Categories"
+        verbose_name_plural = "Spaces"
 
 class Article(models.Model):
     title = models.CharField(max_length=200)
     summary = models.TextField()
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='articles')
+    space = models.ForeignKey(Space, on_delete=models.CASCADE, related_name='articles')
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='articles', null=True, blank=True)
     tags = models.JSONField(default=list)
     created_at = models.DateField(default=timezone.now)

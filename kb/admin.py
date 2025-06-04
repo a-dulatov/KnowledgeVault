@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import (Category, Article, ArticleAttachment, ArticleParagraph, 
+from .models import (Space, Article, ArticleAttachment, ArticleParagraph, 
                      ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView,
                      ArticleRating, ArticleComment, ParagraphLike)
 
@@ -38,7 +38,7 @@ class ArticleAdmin(admin.ModelAdmin):
         return obj.attachments.count()
     attachment_count.short_description = 'Attachments'
 
-class CategoryAdmin(admin.ModelAdmin):
+class SpaceAdmin(admin.ModelAdmin):
     list_display = ('name', 'article_count')
     search_fields = ('name', 'description')
     

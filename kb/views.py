@@ -10,7 +10,7 @@ from django.utils.html import strip_tags
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
-from .models import (Article, Category, ArticleAttachment, ArticleParagraph, 
+from .models import (Article, Space, ArticleAttachment, ArticleParagraph, 
                      ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView,
                      ArticleRating, ArticleComment, ParagraphLike)
 from .forms import LoginForm, RegistrationForm, ArticleForm, ParagraphForm
