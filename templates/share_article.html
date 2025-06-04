@@ -74,21 +74,65 @@
                 </div>
             </div>
 
+            <!-- Secure Share Information -->
+            <div class="alert alert-info mb-4">
+                <h6><i class="fas fa-shield-alt me-2"></i>Secure Time-Limited Sharing</h6>
+                <p class="mb-2">This article is shared using a secure, time-limited link for enhanced security.</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <small><strong>Expires:</strong> {{ share_link.expires_at|date:"M d, Y \a\t g:i A" }}</small>
+                    </div>
+                    <div class="col-md-6">
+                        <small><strong>Views:</strong> {{ share_link.view_count }}</small>
+                    </div>
+                </div>
+            </div>
+
             <!-- Copy URL Section -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-link me-2"></i>Copy Link</h5>
+                    <h5 class="mb-0"><i class="fas fa-link me-2"></i>Secure Share Link</h5>
                 </div>
                 <div class="card-body">
                     <div class="input-group">
-                        <input type="text" class="form-control copy-url-input" id="articleUrl" value="{{ article_url }}" readonly>
+                        <input type="text" class="form-control copy-url-input" id="articleUrl" value="{{ secure_url }}" readonly>
                         <button class="btn btn-primary" type="button" onclick="copyToClipboard()">
                             <i class="fas fa-copy me-1"></i>Copy
                         </button>
                     </div>
-                    <small class="text-muted mt-2 d-block">Share this direct link to the article</small>
+                    <small class="text-muted mt-2 d-block">
+                        This secure link expires {{ share_link.expires_at|timeuntil }} from now 
+                        ({{ settings.link_expiry_hours }} hour{{ settings.link_expiry_hours|pluralize }} after creation)
+                    </small>
                 </div>
             </div>
+
+            <!-- Link Management -->
+            {% if user.is_authenticated %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Link Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <button class="btn btn-outline-warning w-100" onclick="generateNewLink()">
+                                <i class="fas fa-sync-alt me-2"></i>Generate New Link
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="number" id="customHours" class="form-control" placeholder="Hours" min="1" max="168" value="{{ settings.link_expiry_hours }}">
+                                <button class="btn btn-outline-info" onclick="generateCustomLink()">
+                                    <i class="fas fa-clock me-1"></i>Custom
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-text">Generate a new link or set custom expiration time (1-168 hours)</div>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Social Media Sharing -->
             <div class="card mb-4">
@@ -173,6 +217,23 @@
                 </div>
             </div>
 
+            <!-- Share Settings Info -->
+            <div class="card border-secondary mb-4">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="fas fa-cog me-2"></i>Share Settings</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small><strong>Link Duration:</strong> {{ settings.link_expiry_hours }} hours</small><br>
+                            <small><strong>Max Active Links:</strong> {{ settings.max_shares_per_article }}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <small><strong>Auth Required:</strong> {% if settings.require_authentication %}Yes{% else %}No{% endif %}</small><br>
+                            <small><strong>View Tracking:</strong> {% if settings.track_views %}Enabled{% else %}Disabled{% endif %}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Back to Article -->
             <div class="text-center">
                 <a href="{% url 'article_detail' article_id=article.id %}" class="btn btn-outline-secondary">
@@ -214,11 +275,9 @@ function copyToClipboard() {
 }
 
 // Generate QR Code
-document.addEventListener('DOMContentLoaded', function() {
+function updateQRCode(url) {
     const qrContainer = document.getElementById('qrcode');
-    const articleUrl = document.getElementById('articleUrl').value;
-    
-    QRCode.toCanvas(qrContainer, articleUrl, {
+    QRCode.toCanvas(qrContainer, url, {
         width: 200,
         height: 200,
         colorDark: '#000000',
@@ -229,7 +288,103 @@ document.addEventListener('DOMContentLoaded', function() {
             qrContainer.innerHTML = '<p class="text-muted">QR code could not be generated</p>';
         }
     });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const articleUrl = document.getElementById('articleUrl').value;
+    updateQRCode(articleUrl);
 });
+
+// Secure link management functions
+function generateNewLink() {
+    generateCustomLink();
+}
+
+function generateCustomLink() {
+    const hours = document.getElementById('customHours').value;
+    const url = '{% url "generate_share_link" article_id=article.id %}' + (hours ? `?hours=${hours}` : '');
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the share URL
+                document.getElementById('articleUrl').value = data.url;
+                
+                // Update QR code
+                updateQRCode(data.url);
+                
+                // Update social media links
+                updateSocialLinks(data.url);
+                
+                // Show success message
+                showAlert('success', 'New secure share link generated successfully!');
+                
+                // Update expiry info
+                const expiryDate = new Date(data.expires_at);
+                const alertInfo = document.querySelector('.alert-info .row');
+                if (alertInfo) {
+                    alertInfo.innerHTML = `
+                        <div class="col-md-6">
+                            <small><strong>Expires:</strong> ${expiryDate.toLocaleDateString()} at ${expiryDate.toLocaleTimeString()}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <small><strong>Views:</strong> ${data.view_count}</small>
+                        </div>
+                    `;
+                }
+            } else {
+                showAlert('danger', 'Failed to generate new link: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'Failed to generate new link. Please try again.');
+        });
+}
+
+function updateSocialLinks(newUrl) {
+    const encodedUrl = encodeURIComponent(newUrl);
+    const encodedTitle = encodeURIComponent('{{ article.title }}');
+    
+    const socialLinks = {
+        'twitter': `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
+        'facebook': `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+        'linkedin': `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+        'reddit': `https://reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`,
+        'telegram': `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`,
+        'whatsapp': `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
+        'email': `mailto:?subject=${encodedTitle}&body=Check out this article: ${encodedUrl}`
+    };
+    
+    // Update all social media links
+    Object.keys(socialLinks).forEach(platform => {
+        const link = document.querySelector(`a[href*="${platform}"]`);
+        if (link) {
+            link.href = socialLinks[platform];
+        }
+    });
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert at the top of the container
+    const container = document.querySelector('.col-lg-8');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
 
 // Add click tracking for share buttons
 document.querySelectorAll('.share-button').forEach(button => {
