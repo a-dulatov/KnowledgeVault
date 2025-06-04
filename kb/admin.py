@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Category, Article, ArticleAttachment, ArticleParagraph, ParagraphAttachment
+from .models import (Category, Article, ArticleAttachment, ArticleParagraph, 
+                     ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView)
 
 class ArticleAttachmentInline(admin.TabularInline):
     model = ArticleAttachment
@@ -78,3 +79,67 @@ admin.site.register(Article, ArticleAdmin)
 admin.site.register(ArticleAttachment)
 admin.site.register(ArticleParagraph, ParagraphAdmin)
 admin.site.register(ParagraphAttachment)
+
+
+@admin.register(ShareSettings)
+class ShareSettingsAdmin(admin.ModelAdmin):
+    list_display = ('link_expiry_hours', 'max_shares_per_article', 'require_authentication', 'track_views', 'updated_at')
+    fields = ('link_expiry_hours', 'max_shares_per_article', 'require_authentication', 'track_views')
+    
+    def has_add_permission(self, request):
+        # Only allow one settings instance
+        return not ShareSettings.objects.exists()
+    
+    def has_delete_permission(self, request, obj=None):
+        # Don't allow deletion of settings
+        return False
+
+
+class ShareLinkViewInline(admin.TabularInline):
+    model = ShareLinkView
+    extra = 0
+    readonly_fields = ('ip_address', 'user_agent', 'referrer', 'viewed_at')
+    fields = ('ip_address', 'viewed_at', 'referrer')
+    can_delete = False
+    
+    def has_add_permission(self, request, obj):
+        return False
+
+
+@admin.register(SecureShareLink)
+class SecureShareLinkAdmin(admin.ModelAdmin):
+    list_display = ('article', 'token_preview', 'created_by', 'view_count', 'is_active', 'expires_at', 'created_at')
+    list_filter = ('is_active', 'created_at', 'expires_at', 'article__category')
+    search_fields = ('article__title', 'token', 'created_by__username')
+    readonly_fields = ('token', 'view_count', 'last_accessed', 'created_at')
+    fields = ('article', 'token', 'created_by', 'expires_at', 'is_active', 'view_count', 'last_accessed', 'created_at')
+    inlines = [ShareLinkViewInline]
+    actions = ['deactivate_links', 'cleanup_expired']
+    
+    def token_preview(self, obj):
+        return f"{obj.token[:8]}..." if obj.token else "N/A"
+    token_preview.short_description = 'Token (Preview)'
+    
+    def deactivate_links(self, request, queryset):
+        updated = queryset.update(is_active=False)
+        self.message_user(request, f'{updated} share links deactivated.')
+    deactivate_links.short_description = 'Deactivate selected share links'
+    
+    def cleanup_expired(self, request, queryset):
+        expired_count = SecureShareLink.cleanup_expired()
+        self.message_user(request, f'{expired_count} expired share links removed.')
+    cleanup_expired.short_description = 'Clean up expired share links'
+
+
+@admin.register(ShareLinkView)
+class ShareLinkViewAdmin(admin.ModelAdmin):
+    list_display = ('share_link', 'ip_address', 'viewed_at')
+    list_filter = ('viewed_at', 'share_link__article__category')
+    search_fields = ('share_link__article__title', 'ip_address')
+    readonly_fields = ('share_link', 'ip_address', 'user_agent', 'referrer', 'viewed_at')
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
