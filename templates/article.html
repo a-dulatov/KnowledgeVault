@@ -228,11 +228,11 @@
                     <div class="paragraph-actions mt-3">
                         <div class="d-flex align-items-center gap-3">
                             <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn like-btn {% if paragraph.get_user_like_status:user == True %}btn-success{% else %}btn-outline-success{% endif %}" 
+                                <button type="button" class="btn like-btn btn-outline-success" 
                                         data-paragraph-id="{{ paragraph.id }}" data-action="like">
                                     <i class="fas fa-thumbs-up"></i> <span class="like-count">{{ paragraph.like_count }}</span>
                                 </button>
-                                <button type="button" class="btn dislike-btn {% if paragraph.get_user_like_status:user == False %}btn-danger{% else %}btn-outline-danger{% endif %}" 
+                                <button type="button" class="btn dislike-btn btn-outline-danger" 
                                         data-paragraph-id="{{ paragraph.id }}" data-action="dislike">
                                     <i class="fas fa-thumbs-down"></i> <span class="dislike-count">{{ paragraph.dislike_count }}</span>
                                 </button>
