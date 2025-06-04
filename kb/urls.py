@@ -36,6 +36,11 @@ urlpatterns = [
     path('paragraph-attachment/<int:attachment_id>/delete/', views.delete_paragraph_attachment, name='delete_paragraph_attachment'),
     path('article/<int:article_id>/reorder-paragraphs/', views.reorder_paragraphs, name='reorder_paragraphs'),
     
+    # Rating and commenting
+    path('article/<int:article_id>/rate/', views.rate_article, name='rate_article'),
+    path('article/<int:article_id>/comment/', views.comment_article, name='comment_article'),
+    path('paragraph/<int:paragraph_id>/like/', views.like_paragraph, name='like_paragraph'),
+    
     # API endpoints
     path('api/search/', views.api_search, name='api_search'),
     path('api/articles/', views.api_articles, name='api_articles'),

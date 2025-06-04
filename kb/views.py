@@ -9,7 +9,8 @@ from django.urls import reverse
 from django.utils.html import strip_tags
 from django.conf import settings
 from .models import (Article, Category, ArticleAttachment, ArticleParagraph, 
-                     ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView)
+                     ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView,
+                     ArticleRating, ArticleComment, ParagraphLike)
 from .forms import LoginForm, RegistrationForm, ArticleForm, ParagraphForm
 from django.db.models import Q
 import json
@@ -34,9 +35,23 @@ def index(request):
 def article_detail(request, article_id):
     """Display a single article"""
     article = get_object_or_404(Article, id=article_id)
+    
+    # Get rating and comment data
+    user_rating = None
+    if request.user.is_authenticated:
+        user_rating = article.get_user_rating(request.user)
+    
+    # Get approved comments (only top-level comments, replies are loaded via model method)
+    comments = article.comments.filter(is_approved=True, parent__isnull=True).order_by('-created_at')
+    
     context = {
         'article': article,
-        'title': article.title
+        'title': article.title,
+        'user_rating': user_rating,
+        'comments': comments,
+        'average_rating': article.average_rating(),
+        'rating_count': article.rating_count(),
+        'comment_count': article.comment_count(),
     }
     return render(request, 'article.html', context)
 
@@ -882,3 +897,114 @@ def share_paragraph(request, paragraph_id):
     }
     
     return render(request, 'share_paragraph.html', context)
+
+
+@login_required
+def rate_article(request, article_id):
+    """Rate an article (1-5 stars)"""
+    if request.method == 'POST':
+        article = get_object_or_404(Article, pk=article_id)
+        rating_value = int(request.POST.get('rating', 0))
+        
+        if 1 <= rating_value <= 5:
+            rating, created = ArticleRating.objects.update_or_create(
+                article=article,
+                user=request.user,
+                defaults={'rating': rating_value}
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'rating': rating.rating,
+                'average_rating': round(article.average_rating(), 1),
+                'rating_count': article.rating_count(),
+                'message': 'Rating updated' if not created else 'Rating added'
+            })
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid rating value'})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+@login_required
+def comment_article(request, article_id):
+    """Add a comment to an article"""
+    if request.method == 'POST':
+        article = get_object_or_404(Article, pk=article_id)
+        content = request.POST.get('content', '').strip()
+        parent_id = request.POST.get('parent_id')
+        
+        if content:
+            parent = None
+            if parent_id:
+                try:
+                    parent = ArticleComment.objects.get(pk=parent_id, article=article)
+                except ArticleComment.DoesNotExist:
+                    pass
+            
+            comment = ArticleComment.objects.create(
+                article=article,
+                user=request.user,
+                content=content,
+                parent=parent
+            )
+            
+            # Render the comment HTML
+            comment_html = render_to_string('partials/comment.html', {
+                'comment': comment,
+                'user': request.user
+            })
+            
+            return JsonResponse({
+                'success': True,
+                'comment_html': comment_html,
+                'comment_count': article.comment_count()
+            })
+        else:
+            return JsonResponse({'success': False, 'error': 'Comment content cannot be empty'})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+@login_required
+def like_paragraph(request, paragraph_id):
+    """Like or dislike a paragraph"""
+    if request.method == 'POST':
+        paragraph = get_object_or_404(ArticleParagraph, pk=paragraph_id)
+        action = request.POST.get('action')  # 'like', 'dislike', or 'remove'
+        
+        try:
+            existing_like = ParagraphLike.objects.get(paragraph=paragraph, user=request.user)
+            
+            if action == 'remove':
+                existing_like.delete()
+                user_action = None
+            elif action == 'like':
+                existing_like.is_like = True
+                existing_like.save()
+                user_action = True
+            elif action == 'dislike':
+                existing_like.is_like = False
+                existing_like.save()
+                user_action = False
+            else:
+                return JsonResponse({'success': False, 'error': 'Invalid action'})
+                
+        except ParagraphLike.DoesNotExist:
+            if action == 'like':
+                ParagraphLike.objects.create(paragraph=paragraph, user=request.user, is_like=True)
+                user_action = True
+            elif action == 'dislike':
+                ParagraphLike.objects.create(paragraph=paragraph, user=request.user, is_like=False)
+                user_action = False
+            else:
+                user_action = None
+        
+        return JsonResponse({
+            'success': True,
+            'like_count': paragraph.like_count(),
+            'dislike_count': paragraph.dislike_count(),
+            'user_action': user_action
+        })
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
