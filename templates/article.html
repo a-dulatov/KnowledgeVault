@@ -456,13 +456,13 @@
         <!-- Category Information -->
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">About this Category</h5>
+                <h5 class="mb-0">About this Space</h5>
             </div>
             <div class="card-body">
-                <h6>{{ article.category.name }}</h6>
-                <p>{{ article.category.description }}</p>
-                <a href="{% url 'category_detail' category_id=article.category.id %}" class="btn btn-primary btn-sm">
-                    View All Articles in this Category
+                <h6>{{ article.space.name }}</h6>
+                <p>{{ article.space.description }}</p>
+                <a href="{% url 'space_detail' space_id=article.space.id %}" class="btn btn-primary btn-sm">
+                    View All Articles in this Space
                 </a>
             </div>
         </div>
