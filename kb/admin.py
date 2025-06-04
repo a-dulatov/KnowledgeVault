@@ -144,3 +144,46 @@ class ShareLinkViewAdmin(admin.ModelAdmin):
     
     def has_change_permission(self, request, obj=None):
         return False
+
+
+# Rating and Comment Administration
+@admin.register(ArticleRating)
+class ArticleRatingAdmin(admin.ModelAdmin):
+    list_display = ('article', 'user', 'rating', 'created_at')
+    list_filter = ('rating', 'created_at', 'article__category')
+    search_fields = ('article__title', 'user__username')
+    readonly_fields = ('created_at', 'updated_at')
+    ordering = ['-created_at']
+
+
+@admin.register(ArticleComment)
+class ArticleCommentAdmin(admin.ModelAdmin):
+    list_display = ('article', 'user', 'content_preview', 'parent', 'is_approved', 'created_at')
+    list_filter = ('is_approved', 'created_at', 'article__category')
+    search_fields = ('article__title', 'user__username', 'content')
+    readonly_fields = ('created_at', 'updated_at')
+    ordering = ['-created_at']
+    actions = ['approve_comments', 'unapprove_comments']
+    
+    def content_preview(self, obj):
+        return obj.content[:50] + "..." if len(obj.content) > 50 else obj.content
+    content_preview.short_description = 'Content Preview'
+    
+    def approve_comments(self, request, queryset):
+        queryset.update(is_approved=True)
+        self.message_user(request, f'{queryset.count()} comments approved.')
+    approve_comments.short_description = 'Approve selected comments'
+    
+    def unapprove_comments(self, request, queryset):
+        queryset.update(is_approved=False)
+        self.message_user(request, f'{queryset.count()} comments unapproved.')
+    unapprove_comments.short_description = 'Unapprove selected comments'
+
+
+@admin.register(ParagraphLike)
+class ParagraphLikeAdmin(admin.ModelAdmin):
+    list_display = ('paragraph', 'user', 'is_like', 'created_at')
+    list_filter = ('is_like', 'created_at', 'paragraph__article__category')
+    search_fields = ('paragraph__title', 'paragraph__article__title', 'user__username')
+    readonly_fields = ('created_at', 'updated_at')
+    ordering = ['-created_at']
