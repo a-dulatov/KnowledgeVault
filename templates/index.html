@@ -24,33 +24,67 @@
 </div>
 {% endif %}
 
-<!-- Spaces Section -->
-<section class="mb-5">
-    <h2 class="mb-4">Browse by Space</h2>
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        {% for space in spaces %}
-        <div class="col">
-            <div class="card space-card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2">
-                        {% if space.icon %}
-                        <i class="{{ space.icon }} me-2"></i>
-                        {% endif %}
-                        <h5 class="card-title mb-0">{{ space.name }}</h5>
-                    </div>
-                    {% if space.label %}
-                    <span class="badge mb-2" style="background-color: {{ space.label.color }}; color: white;">{{ space.label.name }}</span>
-                    {% endif %}
-                    <p class="card-text">{{ space.description }}</p>
+<div class="row">
+    <!-- Sidebar for Label Filtering -->
+    <div class="col-md-3">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Filter by Label</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <button type="button" class="btn btn-outline-secondary btn-sm w-100 label-filter" data-label="all">
+                        All Spaces
+                    </button>
                 </div>
-                <div class="card-footer bg-transparent border-0">
-                    <a href="{% url 'space_detail' space_id=space.id %}" class="btn btn-outline-primary">View Articles</a>
+                {% for label in labels %}
+                <div class="mb-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm w-100 label-filter" 
+                            data-label="{{ label.id }}" 
+                            style="border-color: {{ label.color }};">
+                        <span class="badge me-2" style="background-color: {{ label.color }}; color: white;">{{ label.name }}</span>
+                        <span class="label-count" data-label-id="{{ label.id }}">0</span> spaces
+                    </button>
                 </div>
+                {% endfor %}
+                {% if not labels %}
+                <p class="text-muted small">No labels created yet.</p>
+                {% endif %}
             </div>
         </div>
-        {% endfor %}
     </div>
-</section>
+
+    <!-- Main Content Area -->
+    <div class="col-md-9">
+        <!-- Spaces Section -->
+        <section class="mb-5">
+            <h2 class="mb-4">Browse by Space</h2>
+            <div class="row row-cols-1 row-cols-md-2 g-4" id="spaces-container">
+                {% for space in spaces %}
+                <div class="col space-item" data-label-id="{{ space.label.id|default:'none' }}">
+                    <div class="card space-card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-2">
+                                {% if space.icon %}
+                                <i class="{{ space.icon }} me-2"></i>
+                                {% endif %}
+                                <h5 class="card-title mb-0">{{ space.name }}</h5>
+                            </div>
+                            {% if space.label %}
+                            <span class="badge mb-2" style="background-color: {{ space.label.color }}; color: white;">{{ space.label.name }}</span>
+                            {% endif %}
+                            <p class="card-text">{{ space.description }}</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            <a href="{% url 'space_detail' space_id=space.id %}" class="btn btn-outline-primary">View Articles</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
 
 <!-- Recent Articles Section -->
 <section>

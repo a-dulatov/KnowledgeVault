@@ -10,7 +10,7 @@ from django.utils.html import strip_tags
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
-from .models import (Article, Space, ArticleAttachment, ArticleParagraph, 
+from .models import (Label, Article, Space, ArticleAttachment, ArticleParagraph, 
                      ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView,
                      ArticleRating, ArticleComment, ParagraphLike)
 from .forms import LoginForm, RegistrationForm, ArticleForm, ParagraphForm
@@ -24,12 +24,14 @@ from weasyprint.text.fonts import FontConfiguration
 
 def index(request):
     """Home page with featured articles and spaces"""
-    spaces = Space.objects.all()
+    spaces = Space.objects.select_related('label').all()
+    labels = Label.objects.all()
     latest_articles = Article.objects.order_by('-created_at')[:5]
     
     context = {
         'spaces': spaces,
-        'latest_articles': latest_articles,
+        'labels': labels,
+        'recent_articles': latest_articles,
         'title': 'Knowledge Base Home'
     }
     return render(request, 'index.html', context)
