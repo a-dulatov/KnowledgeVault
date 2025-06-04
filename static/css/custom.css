@@ -224,13 +224,13 @@ body {
     box-shadow: 0 2px 4px var(--shadow-corporate);
 }
 
-/* Category cards */
-.category-card {
+/* Space cards */
+.space-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     height: 100%;
 }
 
-.category-card:hover {
+.space-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }

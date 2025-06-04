@@ -59,7 +59,7 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="/">Home</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'category_detail' category_id=article.category.id %}">{{ article.category.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'space_detail' space_id=article.space.id %}">{{ article.space.name }}</a></li>
                     <li class="breadcrumb-item active" aria-current="page">{{ article.title }}</li>
                 </ol>
             </nav>
@@ -151,8 +151,8 @@
                     {% endif %}
                 </div>
                 <div>
-                    <a href="{% url 'category_detail' category_id=article.category.id %}" class="badge bg-primary text-decoration-none">
-                        {{ article.category.name }}
+                    <a href="{% url 'space_detail' space_id=article.space.id %}" class="badge bg-primary text-decoration-none">
+                        {{ article.space.name }}
                     </a>
                 </div>
             </div>

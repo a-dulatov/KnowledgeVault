@@ -18,15 +18,15 @@ class ArticleParagraphInline(admin.TabularInline):
 
 
 class ArticleAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'attachment_count', 'created_at', 'updated_at')
-    list_filter = ('category', 'created_at', 'updated_at')
+    list_display = ('title', 'space', 'attachment_count', 'created_at', 'updated_at')
+    list_filter = ('space', 'created_at', 'updated_at')
     search_fields = ('title', 'summary')
     prepopulated_fields = {'title': ('title',)}
     readonly_fields = ('created_at', 'updated_at')
     inlines = [ArticleParagraphInline, ArticleAttachmentInline]
     fieldsets = (
         (None, {
-            'fields': ('title', 'summary', 'category', 'tags')
+            'fields': ('title', 'summary', 'space', 'tags')
         }),
         ('Dates', {
             'fields': ('created_at', 'updated_at'),
