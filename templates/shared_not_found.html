@@ -1,0 +1,30 @@
+{% extends 'layout.html' %}
+
+{% block title %}Share Link Not Found{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-secondary">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-search text-secondary" style="font-size: 4rem;"></i>
+                    </div>
+                    <h2 class="card-title text-secondary">Share Link Not Found</h2>
+                    <p class="card-text">
+                        The secure share link you're looking for doesn't exist or may have been removed.
+                    </p>
+                    <p class="text-muted small">
+                        Please verify the link is correct or contact the original sender 
+                        for a new share link.
+                    </p>
+                    <a href="{% url 'index' %}" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i>Go to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

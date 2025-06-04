@@ -8,7 +8,8 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import strip_tags
 from django.conf import settings
-from .models import Article, Category, ArticleAttachment, ArticleParagraph, ParagraphAttachment
+from .models import (Article, Category, ArticleAttachment, ArticleParagraph, 
+                     ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView)
 from .forms import LoginForm, RegistrationForm, ArticleForm, ParagraphForm
 from django.db.models import Q
 import json
@@ -661,12 +662,16 @@ def generate_share_preview(request, article_id):
 
 
 def share_article(request, article_id):
-    """Article sharing page with custom preview"""
+    """Article sharing page with secure time-limited links"""
     article = get_object_or_404(Article, id=article_id)
     
-    # Build sharing URLs
-    article_url = request.build_absolute_uri(reverse('article_detail', args=[article.id]))
-    encoded_url = urllib.parse.quote(article_url)
+    # Create or get existing secure share link
+    user = request.user if request.user.is_authenticated else None
+    share_link = SecureShareLink.create_for_article(article, user)
+    
+    # Build secure sharing URL
+    secure_url = request.build_absolute_uri(reverse('shared_article', args=[share_link.token]))
+    encoded_url = urllib.parse.quote(secure_url)
     encoded_title = urllib.parse.quote(article.title)
     encoded_summary = urllib.parse.quote(strip_tags(article.summary)[:160])
     
@@ -680,11 +685,113 @@ def share_article(request, article_id):
         'email': f"mailto:?subject={encoded_title}&body=Check out this article: {encoded_url}"
     }
     
+    # Get share settings
+    settings = ShareSettings.get_settings()
+    
     context = {
         'article': article,
-        'article_url': article_url,
+        'share_link': share_link,
+        'secure_url': secure_url,
         'share_urls': share_urls,
+        'settings': settings,
         'title': f'Share: {article.title}'
     }
     
     return render(request, 'share_article.html', context)
+
+
+def shared_article(request, token):
+    """View article via secure share link"""
+    try:
+        share_link = get_object_or_404(SecureShareLink, token=token)
+        
+        # Check if link is valid
+        if not share_link.is_valid:
+            if share_link.is_expired:
+                return render(request, 'shared_expired.html', {
+                    'title': 'Link Expired',
+                    'article_title': share_link.article.title
+                })
+            else:
+                return render(request, 'shared_inactive.html', {
+                    'title': 'Link Inactive',
+                    'article_title': share_link.article.title
+                })
+        
+        # Get share settings
+        settings = ShareSettings.get_settings()
+        
+        # Check if authentication is required
+        if settings.require_authentication and not request.user.is_authenticated:
+            return redirect('login')
+        
+        # Record the view if tracking is enabled
+        if settings.track_views:
+            share_link.record_view()
+            
+            # Create detailed view record
+            ShareLinkView.objects.create(
+                share_link=share_link,
+                ip_address=get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')[:500],
+                referrer=request.META.get('HTTP_REFERER')
+            )
+        
+        article = share_link.article
+        
+        context = {
+            'article': article,
+            'share_link': share_link,
+            'is_shared_view': True,
+            'expires_at': share_link.expires_at,
+            'title': article.title
+        }
+        
+        return render(request, 'shared_article.html', context)
+        
+    except SecureShareLink.DoesNotExist:
+        return render(request, 'shared_not_found.html', {
+            'title': 'Share Link Not Found'
+        })
+
+
+def get_client_ip(request):
+    """Get client IP address from request"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+def generate_share_link(request, article_id):
+    """Generate a new secure share link for an article"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+    
+    article = get_object_or_404(Article, id=article_id)
+    
+    # Get custom expiry hours from request
+    custom_hours = request.GET.get('hours')
+    if custom_hours:
+        try:
+            custom_hours = int(custom_hours)
+            if custom_hours <= 0 or custom_hours > 8760:  # Max 1 year
+                custom_hours = None
+        except ValueError:
+            custom_hours = None
+    
+    # Create new share link
+    share_link = SecureShareLink.create_for_article(article, request.user, custom_hours)
+    
+    # Build secure URL
+    secure_url = request.build_absolute_uri(reverse('shared_article', args=[share_link.token]))
+    
+    return JsonResponse({
+        'success': True,
+        'token': share_link.token,
+        'url': secure_url,
+        'expires_at': share_link.expires_at.isoformat(),
+        'view_count': share_link.view_count
+    })

@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+
+{% block title %}Link Inactive{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-ban text-danger" style="font-size: 4rem;"></i>
+                    </div>
+                    <h2 class="card-title text-danger">Share Link Inactive</h2>
+                    <p class="card-text">
+                        The secure share link for <strong>{{ article_title }}</strong> has been 
+                        deactivated and is no longer accessible.
+                    </p>
+                    <p class="text-muted small">
+                        This link may have been disabled by an administrator for security reasons.
+                        Please contact the original sender for a new share link.
+                    </p>
+                    <a href="{% url 'index' %}" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i>Go to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,244 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block title %}{{ article.title }} - Shared Article{% endblock %}
+
+{% block extra_head %}
+<!-- Open Graph Meta Tags for Social Media Sharing -->
+<meta property="og:title" content="{{ article.title }}">
+<meta property="og:description" content="{{ article.summary|striptags|truncatewords:30 }}">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Knowledge Base">
+<meta property="article:author" content="{% if article.author %}{{ article.author.username }}{% else %}Anonymous{% endif %}">
+<meta property="article:published_time" content="{{ article.created_at|date:'c' }}">
+<meta property="article:modified_time" content="{{ article.updated_at|date:'c' }}">
+<meta property="article:section" content="{{ article.category.name }}">
+{% for tag in article.tags %}
+<meta property="article:tag" content="{{ tag }}">
+{% endfor %}
+
+<!-- Twitter Card Meta Tags -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ article.title }}">
+<meta name="twitter:description" content="{{ article.summary|striptags|truncatewords:30 }}">
+<meta name="twitter:url" content="{{ request.build_absolute_uri }}">
+
+<!-- Additional Meta Tags -->
+<meta name="description" content="{{ article.summary|striptags }}">
+<meta name="keywords" content="{% for tag in article.tags %}{{ tag }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+<meta name="author" content="{% if article.author %}{{ article.author.username }}{% else %}Anonymous{% endif %}">
+
+<!-- Canonical URL -->
+<link rel="canonical" href="{{ request.build_absolute_uri }}">
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .shared-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .expiry-warning {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    
+    .article-header {
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Shared Article Header -->
+    <div class="shared-header text-center">
+        <h2><i class="fas fa-share-alt me-2"></i>Shared Article</h2>
+        <p class="mb-0">This article was shared with you via a secure link</p>
+    </div>
+
+    <!-- Expiry Warning -->
+    <div class="expiry-warning">
+        <i class="fas fa-clock me-2"></i>
+        <strong>Note:</strong> This shared link will expire on {{ expires_at|date:"F d, Y \a\t g:i A" }}
+    </div>
+
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Article Header -->
+            <div class="article-header">
+                <h1>{{ article.title }}</h1>
+                
+                <div class="article-metadata d-flex justify-content-between flex-wrap">
+                    <div>
+                        <span class="me-3"><i class="far fa-calendar-alt me-1"></i> Published: {{ article.created_at }}</span>
+                        {% if article.updated_at != article.created_at %}
+                        <span class="me-3"><i class="far fa-edit me-1"></i> Updated: {{ article.updated_at }}</span>
+                        {% endif %}
+                        {% if article.author %}
+                        <span><i class="fas fa-user me-1"></i> Author: {{ article.author.username }}</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <a href="{% url 'category_detail' category_id=article.category.id %}" class="badge bg-primary text-decoration-none">
+                            {{ article.category.name }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Article Summary -->
+            <div class="card bg-dark mb-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Summary</h5>
+                    <p class="card-text">{{ article.summary }}</p>
+                </div>
+            </div>
+            
+            <!-- Article Content - Paragraphs -->
+            <div class="article-content mb-4">
+                {% if article.paragraphs.exists %}
+                    {% for paragraph in article.paragraphs.all %}
+                    <div class="paragraph-section mb-4">
+                        <h4 class="paragraph-title">{{ paragraph.title }}</h4>
+                        <div class="paragraph-content">
+                            {{ paragraph.content|safe }}
+                        </div>
+                        
+                        <!-- Paragraph Attachments -->
+                        {% if paragraph.attachments.exists %}
+                        <div class="paragraph-attachments mt-3">
+                            <h6><i class="fas fa-paperclip me-2"></i>Attachments for this section:</h6>
+                            <div class="row">
+                                {% for attachment in paragraph.attachments.all %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="d-flex align-items-center p-2 border rounded">
+                                        <i class="fas fa-file me-2 text-primary"></i>
+                                        <div>
+                                            <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none">
+                                                {{ attachment.original_name }}
+                                            </a>
+                                            <div class="small text-muted">
+                                                Uploaded: {{ attachment.uploaded_at|date:"M d, Y" }}
+                                                {% if attachment.file_size %}
+                                                | Size: {{ attachment.file_size|filesizeformat }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- Fallback to old content field for backward compatibility -->
+                    {% if article.content %}
+                    <div class="legacy-content">
+                        {{ article.content|safe }}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted">No content available for this article.</p>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+            
+            <!-- Article-level Attachments -->
+            {% if article.attachments.exists %}
+            <div class="card bg-dark mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-paperclip me-2"></i>Article Attachments</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for attachment in article.attachments.all %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-file text-primary me-2"></i>
+                                <div>
+                                    <a href="{{ attachment.file.url }}" target="_blank" class="text-decoration-none">
+                                        {{ attachment.original_name }}
+                                    </a>
+                                    <div class="small text-muted">
+                                        {{ attachment.uploaded_at|date:"M d, Y" }}
+                                        {% if attachment.file_size %}
+                                        | {{ attachment.file_size|filesizeformat }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Tags -->
+            {% if article.tags %}
+            <div class="mb-4">
+                <h6><i class="fas fa-tags me-2"></i>Tags:</h6>
+                {% for tag in article.tags %}
+                <span class="badge bg-secondary me-2">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Share Information -->
+            <div class="card border-info mb-4">
+                <div class="card-body text-center">
+                    <h6 class="card-title"><i class="fas fa-info-circle me-2"></i>About This Shared Link</h6>
+                    <p class="card-text small text-muted mb-0">
+                        This article was shared via a secure, time-limited link. 
+                        Views: {{ share_link.view_count }} | 
+                        Created: {{ share_link.created_at|date:"M d, Y" }} | 
+                        Expires: {{ expires_at|date:"M d, Y \a\t g:i A" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Highlight code blocks
+        document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightBlock(block);
+        });
+
+        // Check if link is expiring soon (within 24 hours)
+        const expiresAt = new Date('{{ expires_at|date:"c" }}');
+        const now = new Date();
+        const hoursUntilExpiry = (expiresAt - now) / (1000 * 60 * 60);
+        
+        if (hoursUntilExpiry <= 24 && hoursUntilExpiry > 0) {
+            const warning = document.querySelector('.expiry-warning');
+            warning.classList.add('alert', 'alert-warning');
+            warning.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Warning:</strong> This shared link expires in ${Math.round(hoursUntilExpiry)} hours 
+                (${expiresAt.toLocaleString()})
+            `;
+        }
+    });
+</script>
+{% endblock %}

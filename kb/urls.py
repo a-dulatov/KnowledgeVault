@@ -24,6 +24,8 @@ urlpatterns = [
     # Sharing functionality
     path('article/<int:article_id>/share/', views.share_article, name='share_article'),
     path('article/<int:article_id>/share-preview/', views.generate_share_preview, name='generate_share_preview'),
+    path('article/<int:article_id>/generate-link/', views.generate_share_link, name='generate_share_link'),
+    path('shared/<str:token>/', views.shared_article, name='shared_article'),
     
     # Paragraph management
     path('article/<int:article_id>/paragraph/add/', views.add_paragraph, name='add_paragraph'),
