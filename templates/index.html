@@ -34,7 +34,7 @@
             <div class="card-body">
                 <div class="mb-3">
                     <button type="button" class="btn btn-outline-secondary btn-sm w-100 label-filter" data-label="all">
-                        All Spaces
+                        <span id="all-spaces-count">All Spaces</span>
                     </button>
                 </div>
                 {% for label in labels %}
@@ -47,6 +47,12 @@
                     </button>
                 </div>
                 {% endfor %}
+                <div class="mb-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm w-100 label-filter" data-label="none">
+                        <span class="text-muted me-2">No Label</span>
+                        <span class="label-count" data-label-id="none">0</span> spaces
+                    </button>
+                </div>
                 {% if not labels %}
                 <p class="text-muted small">No labels created yet.</p>
                 {% endif %}
@@ -61,7 +67,7 @@
             <h2 class="mb-4">Browse by Space</h2>
             <div class="row row-cols-1 row-cols-md-2 g-4" id="spaces-container">
                 {% for space in spaces %}
-                <div class="col space-item" data-label-id="{{ space.label.id|default:'none' }}">
+                <div class="col space-item" data-label-id="{% if space.label %}{{ space.label.id }}{% else %}none{% endif %}">
                     <div class="card space-card h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center mb-2">
