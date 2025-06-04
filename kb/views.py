@@ -23,12 +23,12 @@ from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
 
 def index(request):
-    """Home page with featured articles and categories"""
-    categories = Category.objects.all()
+    """Home page with featured articles and spaces"""
+    spaces = Space.objects.all()
     latest_articles = Article.objects.order_by('-created_at')[:5]
     
     context = {
-        'categories': categories,
+        'spaces': spaces,
         'latest_articles': latest_articles,
         'title': 'Knowledge Base Home'
     }
@@ -57,17 +57,17 @@ def article_detail(request, article_id):
     }
     return render(request, 'article.html', context)
 
-def category_detail(request, category_id):
-    """Display articles in a category"""
-    category = get_object_or_404(Category, id=category_id)
-    articles = Article.objects.filter(category=category)
+def space_detail(request, space_id):
+    """Display articles in a space"""
+    space = get_object_or_404(Space, id=space_id)
+    articles = Article.objects.filter(space=space)
     
     context = {
-        'category': category,
+        'space': space,
         'articles': articles,
-        'title': f'Category: {category.name}'
+        'title': f'Space: {space.name}'
     }
-    return render(request, 'category.html', context)
+    return render(request, 'space.html', context)
 
 def search_view(request):
     """Search page"""
@@ -150,19 +150,19 @@ def api_article(request, article_id):
     
     return JsonResponse(result)
 
-def api_categories(request):
-    """API endpoint to get all categories"""
-    categories = Category.objects.all()
+def api_spaces(request):
+    """API endpoint to get all spaces"""
+    spaces = Space.objects.all()
     results = []
     
-    for category in categories:
+    for space in spaces:
         results.append({
-            'id': category.id,
-            'name': category.name,
-            'description': category.description
+            'id': space.id,
+            'name': space.name,
+            'description': space.description
         })
     
-    return JsonResponse({'categories': results})
+    return JsonResponse({'spaces': results})
 
 # Authentication Views
 def login_view(request):

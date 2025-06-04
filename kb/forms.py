@@ -40,11 +40,11 @@ class ArticleForm(forms.ModelForm):
     
     class Meta:
         model = Article
-        fields = ('title', 'summary', 'category')
+        fields = ('title', 'summary', 'space')
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'category': forms.Select(attrs={'class': 'form-control'}),
+            'space': forms.Select(attrs={'class': 'form-control'}),
         }
     
     def __init__(self, *args, **kwargs):

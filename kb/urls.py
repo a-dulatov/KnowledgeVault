@@ -6,7 +6,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('theme-preview/', TemplateView.as_view(template_name='theme_preview.html'), name='theme_preview'),
     path('article/<int:article_id>/', views.article_detail, name='article_detail'),
-    path('category/<int:category_id>/', views.category_detail, name='category_detail'),
+    path('space/<int:space_id>/', views.space_detail, name='space_detail'),
     path('search/', views.search_view, name='search'),
     
     # Authentication URLs
@@ -47,5 +47,5 @@ urlpatterns = [
     path('api/search/', views.api_search, name='api_search'),
     path('api/articles/', views.api_articles, name='api_articles'),
     path('api/article/<int:article_id>/', views.api_article, name='api_article'),
-    path('api/categories/', views.api_categories, name='api_categories'),
+    path('api/spaces/', views.api_spaces, name='api_spaces'),
 ]

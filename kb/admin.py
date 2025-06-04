@@ -55,7 +55,7 @@ class ParagraphAttachmentInline(admin.TabularInline):
 
 class ParagraphAdmin(admin.ModelAdmin):
     list_display = ('title', 'article', 'order', 'attachment_count', 'created_at')
-    list_filter = ('article__category', 'created_at')
+    list_filter = ('article__space', 'created_at')
     search_fields = ('title', 'content', 'article__title')
     readonly_fields = ('created_at', 'updated_at')
     inlines = [ParagraphAttachmentInline]
@@ -75,7 +75,7 @@ class ParagraphAdmin(admin.ModelAdmin):
 
 
 # Register models
-admin.site.register(Category, CategoryAdmin)
+admin.site.register(Space, SpaceAdmin)
 admin.site.register(Article, ArticleAdmin)
 admin.site.register(ArticleAttachment)
 admin.site.register(ArticleParagraph, ParagraphAdmin)
@@ -110,7 +110,7 @@ class ShareLinkViewInline(admin.TabularInline):
 @admin.register(SecureShareLink)
 class SecureShareLinkAdmin(admin.ModelAdmin):
     list_display = ('article', 'token_preview', 'created_by', 'view_count', 'is_active', 'expires_at', 'created_at')
-    list_filter = ('is_active', 'created_at', 'expires_at', 'article__category')
+    list_filter = ('is_active', 'created_at', 'expires_at', 'article__space')
     search_fields = ('article__title', 'token', 'created_by__username')
     readonly_fields = ('token', 'view_count', 'last_accessed', 'created_at')
     fields = ('article', 'token', 'created_by', 'expires_at', 'is_active', 'view_count', 'last_accessed', 'created_at')
