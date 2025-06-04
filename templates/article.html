@@ -167,6 +167,7 @@
         </div>
         
         <!-- Article Content - Paragraphs -->
+        {% csrf_token %}
         <div class="article-content mb-4">
             {% if article.paragraphs.exists %}
                 {% for paragraph in article.paragraphs.all %}
