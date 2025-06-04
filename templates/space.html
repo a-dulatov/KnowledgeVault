@@ -1,0 +1,72 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block title %}{{ space.name }} - Knowledge Base{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ space.name }}</li>
+    </ol>
+</nav>
+
+<div class="mb-4">
+    <h1>{{ space.name }}</h1>
+    <p class="lead">{{ space.description }}</p>
+</div>
+
+{% if articles %}
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for article in articles %}
+        <div class="col">
+            <div class="card article-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ article.title }}</h5>
+                    <p class="card-text">{{ article.summary }}</p>
+                    
+                    <div class="mb-3">
+                        {% for tag in article.tags %}
+                        <span class="badge bg-secondary me-1">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">Added: {{ article.created_at }}</small>
+                        <a href="{% url 'article_detail' article_id=article.id %}" class="btn btn-sm btn-primary">Read More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info" role="alert">
+        <h4 class="alert-heading">No articles found!</h4>
+        <p>There are currently no articles in this space.</p>
+    </div>
+{% endif %}
+
+<!-- Other Spaces Section -->
+<section class="mt-5">
+    <h2 class="mb-4">Other Spaces</h2>
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for other_space in spaces %}
+            {% if other_space.id != space.id %}
+            <div class="col">
+                <div class="card space-card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ other_space.name }}</h5>
+                        <p class="card-text">{{ other_space.description }}</p>
+                    </div>
+                    <div class="card-footer bg-transparent border-0">
+                        <a href="{% url 'space_detail' space_id=other_space.id %}" class="btn btn-outline-primary">View Articles</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

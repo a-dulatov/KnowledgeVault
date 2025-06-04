@@ -1,7 +1,7 @@
-from .models import Category
+from .models import Space
 
 def categories_processor(request):
-    """Add categories to the context for all templates"""
+    """Add spaces to the context for all templates"""
     return {
-        'categories': Category.objects.all()
+        'spaces': Space.objects.all()
     }

@@ -24,19 +24,19 @@
 </div>
 {% endif %}
 
-<!-- Categories Section -->
+<!-- Spaces Section -->
 <section class="mb-5">
-    <h2 class="mb-4">Browse by Category</h2>
+    <h2 class="mb-4">Browse by Space</h2>
     <div class="row row-cols-1 row-cols-md-3 g-4">
-        {% for category in categories %}
+        {% for space in spaces %}
         <div class="col">
-            <div class="card category-card h-100">
+            <div class="card space-card h-100">
                 <div class="card-body">
-                    <h5 class="card-title">{{ category.name }}</h5>
-                    <p class="card-text">{{ category.description }}</p>
+                    <h5 class="card-title">{{ space.name }}</h5>
+                    <p class="card-text">{{ space.description }}</p>
                 </div>
                 <div class="card-footer bg-transparent border-0">
-                    <a href="{% url 'category_detail' category_id=category.id %}" class="btn btn-outline-primary">View Articles</a>
+                    <a href="{% url 'space_detail' space_id=space.id %}" class="btn btn-outline-primary">View Articles</a>
                 </div>
             </div>
         </div>

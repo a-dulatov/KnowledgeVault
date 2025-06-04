@@ -135,7 +135,7 @@ class SecureShareLinkAdmin(admin.ModelAdmin):
 @admin.register(ShareLinkView)
 class ShareLinkViewAdmin(admin.ModelAdmin):
     list_display = ('share_link', 'ip_address', 'viewed_at')
-    list_filter = ('viewed_at', 'share_link__article__category')
+    list_filter = ('viewed_at', 'share_link__article__space')
     search_fields = ('share_link__article__title', 'ip_address')
     readonly_fields = ('share_link', 'ip_address', 'user_agent', 'referrer', 'viewed_at')
     
@@ -150,7 +150,7 @@ class ShareLinkViewAdmin(admin.ModelAdmin):
 @admin.register(ArticleRating)
 class ArticleRatingAdmin(admin.ModelAdmin):
     list_display = ('article', 'user', 'rating', 'created_at')
-    list_filter = ('rating', 'created_at', 'article__category')
+    list_filter = ('rating', 'created_at', 'article__space')
     search_fields = ('article__title', 'user__username')
     readonly_fields = ('created_at', 'updated_at')
     ordering = ['-created_at']
@@ -159,7 +159,7 @@ class ArticleRatingAdmin(admin.ModelAdmin):
 @admin.register(ArticleComment)
 class ArticleCommentAdmin(admin.ModelAdmin):
     list_display = ('article', 'user', 'content_preview', 'parent', 'is_approved', 'created_at')
-    list_filter = ('is_approved', 'created_at', 'article__category')
+    list_filter = ('is_approved', 'created_at', 'article__space')
     search_fields = ('article__title', 'user__username', 'content')
     readonly_fields = ('created_at', 'updated_at')
     ordering = ['-created_at']
@@ -183,7 +183,7 @@ class ArticleCommentAdmin(admin.ModelAdmin):
 @admin.register(ParagraphLike)
 class ParagraphLikeAdmin(admin.ModelAdmin):
     list_display = ('paragraph', 'user', 'is_like', 'created_at')
-    list_filter = ('is_like', 'created_at', 'paragraph__article__category')
+    list_filter = ('is_like', 'created_at', 'paragraph__article__space')
     search_fields = ('paragraph__title', 'paragraph__article__title', 'user__username')
     readonly_fields = ('created_at', 'updated_at')
     ordering = ['-created_at']

@@ -13,7 +13,7 @@
 <meta property="article:author" content="{% if article.author %}{{ article.author.username }}{% else %}Anonymous{% endif %}">
 <meta property="article:published_time" content="{{ article.created_at|date:'c' }}">
 <meta property="article:modified_time" content="{{ article.updated_at|date:'c' }}">
-<meta property="article:section" content="{{ article.category.name }}">
+<meta property="article:section" content="{{ article.space.name }}">
 {% for tag in article.tags %}
 <meta property="article:tag" content="{{ tag }}">
 {% endfor %}
