@@ -71,6 +71,100 @@
     .paragraph-section {
         scroll-margin-top: 100px;
     }
+    
+    /* View Density Styles */
+    .article-content.compact .paragraph-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .article-content.compact .paragraph-title {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .article-content.compact .paragraph-content {
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    
+    .article-content.compact .card {
+        margin-bottom: 1rem;
+    }
+    
+    .article-content.compact .card-body {
+        padding: 0.75rem;
+    }
+    
+    .article-content.comfortable .paragraph-section {
+        margin-bottom: 2.5rem;
+    }
+    
+    .article-content.comfortable .paragraph-title {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+    
+    .article-content.comfortable .paragraph-content {
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+    
+    .article-content.comfortable .card {
+        margin-bottom: 1.5rem;
+    }
+    
+    .article-content.spacious .paragraph-section {
+        margin-bottom: 4rem;
+    }
+    
+    .article-content.spacious .paragraph-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .article-content.spacious .paragraph-content {
+        font-size: 1.1rem;
+        line-height: 1.8;
+    }
+    
+    .article-content.spacious .card {
+        margin-bottom: 2rem;
+    }
+    
+    .article-content.spacious .card-body {
+        padding: 2rem;
+    }
+    
+    /* Summary card density adjustments */
+    .article-summary.compact {
+        margin-bottom: 1rem;
+    }
+    
+    .article-summary.compact .card-body {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .article-summary.spacious {
+        margin-bottom: 3rem;
+    }
+    
+    .article-summary.spacious .card-body {
+        padding: 2rem;
+        font-size: 1.1rem;
+        line-height: 1.8;
+    }
+    
+    /* Rating and comments density adjustments */
+    .compact .rating-section,
+    .compact .comments-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .spacious .rating-section,
+    .spacious .comments-section {
+        margin-bottom: 3rem;
+    }
 </style>
 {% endblock %}
 
@@ -114,7 +208,25 @@
             
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h1>{{ article.title }}</h1>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 align-items-center">
+                    <!-- View Density Control -->
+                    <div class="btn-group me-3" role="group" aria-label="View density">
+                        <input type="radio" class="btn-check" name="viewDensity" id="compact" value="compact">
+                        <label class="btn btn-outline-secondary btn-sm" for="compact" title="Compact view">
+                            <i class="fas fa-compress-alt"></i>
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="viewDensity" id="comfortable" value="comfortable" checked>
+                        <label class="btn btn-outline-secondary btn-sm" for="comfortable" title="Comfortable view">
+                            <i class="fas fa-align-justify"></i>
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="viewDensity" id="spacious" value="spacious">
+                        <label class="btn btn-outline-secondary btn-sm" for="spacious" title="Spacious view">
+                            <i class="fas fa-expand-alt"></i>
+                        </label>
+                    </div>
+                    
                     {% if user.is_authenticated and article.author == user %}
                     <a href="{% url 'edit_article' article_id=article.id %}" class="btn btn-outline-primary">
                         <i class="fas fa-edit me-1"></i>Edit Article
@@ -207,7 +319,7 @@
         </div>
         
         <!-- Article Summary -->
-        <div class="card mb-4" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
+        <div class="card mb-4 article-summary" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
             <div class="card-body">
                 <p class="card-text mb-0">{{ article.summary }}</p>
             </div>
@@ -215,7 +327,7 @@
         
         <!-- Article Content - Paragraphs -->
         {% csrf_token %}
-        <div class="article-content mb-4">
+        <div class="article-content comfortable mb-4" id="article-content">
             {% if article.paragraphs.exists %}
                 {% for paragraph in article.paragraphs.all %}
                 <div class="paragraph-section mb-4" id="paragraph-{{ paragraph.id }}">
@@ -489,6 +601,9 @@
         
         // Table of Contents functionality
         initTableOfContents();
+        
+        // View Density functionality
+        initViewDensity();
     });
     
     function initTableOfContents() {
@@ -534,6 +649,48 @@
         paragraphSections.forEach(section => {
             observer.observe(section);
         });
+    }
+    
+    function initViewDensity() {
+        const densityRadios = document.querySelectorAll('input[name="viewDensity"]');
+        const articleContent = document.getElementById('article-content');
+        const articleSummary = document.querySelector('.article-summary');
+        const mainContent = document.querySelector('.col-lg-9');
+        
+        // Load saved preference from localStorage
+        const savedDensity = localStorage.getItem('articleViewDensity') || 'comfortable';
+        
+        // Set initial state
+        setViewDensity(savedDensity);
+        
+        // Update radio button state
+        const savedRadio = document.querySelector(`input[value="${savedDensity}"]`);
+        if (savedRadio) {
+            savedRadio.checked = true;
+        }
+        
+        // Add event listeners to radio buttons
+        densityRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    const density = this.value;
+                    setViewDensity(density);
+                    localStorage.setItem('articleViewDensity', density);
+                }
+            });
+        });
+        
+        function setViewDensity(density) {
+            // Remove all density classes
+            articleContent.classList.remove('compact', 'comfortable', 'spacious');
+            articleSummary.classList.remove('compact', 'comfortable', 'spacious');
+            mainContent.classList.remove('compact', 'comfortable', 'spacious');
+            
+            // Add selected density class
+            articleContent.classList.add(density);
+            articleSummary.classList.add(density);
+            mainContent.classList.add(density);
+        }
     }
 
     function deleteAttachment(attachmentId, fileName) {
