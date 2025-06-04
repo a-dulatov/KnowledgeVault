@@ -1,13 +1,18 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.template.loader import render_to_string
 from .models import Article, Category, ArticleAttachment, ArticleParagraph, ParagraphAttachment
 from .forms import LoginForm, RegistrationForm, ArticleForm, ParagraphForm
 from django.db.models import Q
 import json
+import markdown
+import bleach
+from weasyprint import HTML, CSS
+from weasyprint.text.fonts import FontConfiguration
 
 def index(request):
     """Home page with featured articles and categories"""
