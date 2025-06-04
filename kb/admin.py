@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import (Space, Article, ArticleAttachment, ArticleParagraph, 
+from .models import (Label, Space, Article, ArticleAttachment, ArticleParagraph, 
                      ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView,
                      ArticleRating, ArticleComment, ParagraphLike)
 
@@ -38,13 +38,31 @@ class ArticleAdmin(admin.ModelAdmin):
         return obj.attachments.count()
     attachment_count.short_description = 'Attachments'
 
+class LabelAdmin(admin.ModelAdmin):
+    list_display = ('name', 'color', 'colored_label_display')
+    search_fields = ('name',)
+    list_filter = ('color',)
+    
+    def colored_label_display(self, obj):
+        return f'<span style="background-color: {obj.color}; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px;">{obj.name}</span>'
+    colored_label_display.short_description = 'Preview'
+    colored_label_display.allow_tags = True
+
+
 class SpaceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'article_count')
+    list_display = ('name', 'label', 'icon_display', 'article_count')
     search_fields = ('name', 'description')
+    list_filter = ('label',)
+    fields = ('name', 'description', 'label', 'icon')
     
     def article_count(self, obj):
         return obj.articles.count()
     article_count.short_description = 'Number of Articles'
+    
+    def icon_display(self, obj):
+        return f'<i class="{obj.icon}"></i>'
+    icon_display.short_description = 'Icon'
+    icon_display.allow_tags = True
 
 class ParagraphAttachmentInline(admin.TabularInline):
     model = ParagraphAttachment
@@ -75,6 +93,7 @@ class ParagraphAdmin(admin.ModelAdmin):
 
 
 # Register models
+admin.site.register(Label, LabelAdmin)
 admin.site.register(Space, SpaceAdmin)
 admin.site.register(Article, ArticleAdmin)
 admin.site.register(ArticleAttachment)

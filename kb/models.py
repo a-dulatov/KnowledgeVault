@@ -6,9 +6,57 @@ import secrets
 import hashlib
 from datetime import timedelta
 
+class Label(models.Model):
+    COLOR_CHOICES = [
+        ('#007bff', 'Blue'),
+        ('#28a745', 'Green'),
+        ('#dc3545', 'Red'),
+        ('#ffc107', 'Yellow'),
+        ('#6f42c1', 'Purple'),
+        ('#fd7e14', 'Orange'),
+        ('#20c997', 'Teal'),
+        ('#e83e8c', 'Pink'),
+        ('#6c757d', 'Gray'),
+        ('#17a2b8', 'Cyan'),
+    ]
+    
+    name = models.CharField(max_length=50)
+    color = models.CharField(max_length=7, choices=COLOR_CHOICES, default='#007bff')
+    
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        verbose_name_plural = "Labels"
+
 class Space(models.Model):
+    ICON_CHOICES = [
+        ('fas fa-folder', 'Folder'),
+        ('fas fa-book', 'Book'),
+        ('fas fa-lightbulb', 'Lightbulb'),
+        ('fas fa-cog', 'Settings'),
+        ('fas fa-rocket', 'Rocket'),
+        ('fas fa-star', 'Star'),
+        ('fas fa-heart', 'Heart'),
+        ('fas fa-trophy', 'Trophy'),
+        ('fas fa-graduation-cap', 'Education'),
+        ('fas fa-code', 'Code'),
+        ('fas fa-database', 'Database'),
+        ('fas fa-shield-alt', 'Security'),
+        ('fas fa-users', 'Team'),
+        ('fas fa-chart-line', 'Analytics'),
+        ('fas fa-puzzle-piece', 'Puzzle'),
+        ('fas fa-tools', 'Tools'),
+        ('fas fa-globe', 'Global'),
+        ('fas fa-mobile-alt', 'Mobile'),
+        ('fas fa-cloud', 'Cloud'),
+        ('fas fa-fire', 'Fire'),
+    ]
+    
     name = models.CharField(max_length=100)
     description = models.TextField()
+    label = models.ForeignKey(Label, on_delete=models.SET_NULL, null=True, blank=True, related_name='spaces')
+    icon = models.CharField(max_length=50, choices=ICON_CHOICES, default='fas fa-folder')
     
     def __str__(self):
         return self.name
