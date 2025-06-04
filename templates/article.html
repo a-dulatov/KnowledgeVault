@@ -48,12 +48,60 @@
     .tag-container {
         margin: 1.5rem 0;
     }
+    
+    /* Table of Contents Styles */
+    .toc-link {
+        font-size: 0.875rem;
+        color: #6c757d;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+    
+    .toc-link:hover {
+        background-color: #e9ecef;
+        color: #495057;
+    }
+    
+    .toc-link.active {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .paragraph-section {
+        scroll-margin-top: 100px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="row">
-    <div class="col-lg-8">
+    <!-- Table of Contents Sidebar -->
+    <div class="col-lg-3">
+        <div class="card mb-4 sticky-top" style="top: 100px;">
+            <div class="card-header">
+                <h5 class="mb-0">Table of Contents</h5>
+            </div>
+            <div class="card-body">
+                {% if article.paragraphs.exists %}
+                <nav class="nav nav-pills flex-column">
+                    {% for paragraph in article.paragraphs.all %}
+                    <a class="nav-link text-start py-1 px-2 mb-1 toc-link" 
+                       href="#paragraph-{{ paragraph.id }}" 
+                       data-paragraph-id="{{ paragraph.id }}">
+                        <small>{{ paragraph.title }}</small>
+                    </a>
+                    {% endfor %}
+                </nav>
+                {% else %}
+                <p class="text-muted small mb-0">No sections available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-lg-9">
         <!-- Article Header -->
         <div class="article-header">
             <nav aria-label="breadcrumb">
@@ -424,45 +472,6 @@
                         </div>
                     {% endfor %}
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-4">
-        <!-- Related Articles -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Related Articles</h5>
-            </div>
-            <div class="card-body" id="relatedArticles">
-                {% if related_articles %}
-                <ul class="list-group list-group-flush">
-                    {% for related in related_articles %}
-                    <li class="list-group-item bg-transparent">
-                        <a href="{% url 'article_detail' article_id=related.id %}" class="text-decoration-none">
-                            {{ related.title }}
-                        </a>
-                        <div class="small text-muted">{{ related.summary }}</div>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="mb-0">No related articles found.</p>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Category Information -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">About this Space</h5>
-            </div>
-            <div class="card-body">
-                <h6>{{ article.space.name }}</h6>
-                <p>{{ article.space.description }}</p>
-                <a href="{% url 'space_detail' space_id=article.space.id %}" class="btn btn-primary btn-sm">
-                    View All Articles in this Space
-                </a>
             </div>
         </div>
     </div>
