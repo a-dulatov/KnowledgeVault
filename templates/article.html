@@ -170,8 +170,55 @@
         <div class="article-content mb-4">
             {% if article.paragraphs.exists %}
                 {% for paragraph in article.paragraphs.all %}
-                <div class="paragraph-section mb-4">
-                    <h4 class="paragraph-title">{{ paragraph.title }}</h4>
+                <div class="paragraph-section mb-4" id="paragraph-{{ paragraph.id }}">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h4 class="paragraph-title mb-0">{{ paragraph.title }}</h4>
+                        <div class="paragraph-actions">
+                            <!-- Paragraph Share Button -->
+                            <div class="dropdown me-2">
+                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" 
+                                        id="paragraphShare{{ paragraph.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-share-alt me-1"></i>Share Section
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="paragraphShare{{ paragraph.id }}">
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="copyParagraphUrl({{ paragraph.id }})">
+                                            <i class="fas fa-link me-2"></i>Copy Link
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="shareParagraphToTwitter({{ paragraph.id }}, '{{ paragraph.title|escapejs }}')">
+                                            <i class="fab fa-twitter text-info me-2"></i>Twitter
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="shareParagraphToLinkedIn({{ paragraph.id }}, '{{ paragraph.title|escapejs }}')">
+                                            <i class="fab fa-linkedin text-dark me-2"></i>LinkedIn
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'share_paragraph' paragraph_id=paragraph.id %}">
+                                            <i class="fas fa-cog me-2"></i>Advanced Options
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            {% if user.is_authenticated and article.author == user %}
+                            <!-- Edit/Delete Controls for Author -->
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'edit_paragraph' paragraph_id=paragraph.id %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        onclick="deleteParagraph({{ paragraph.id }}, '{{ paragraph.title|escapejs }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
                     <div class="paragraph-content">
                         {{ paragraph.content|safe }}
                     </div>
@@ -456,6 +503,89 @@
                 notification.remove();
             }
         }, 3000);
+    }
+
+    // Paragraph-specific sharing functions
+    function copyParagraphUrl(paragraphId) {
+        // Generate secure share link for this paragraph
+        fetch(`/paragraph/${paragraphId}/generate-link/`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                navigator.clipboard.writeText(data.url).then(function() {
+                    showShareNotification(`Section "${data.paragraph_title}" link copied to clipboard!`);
+                }).catch(function() {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = data.url;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showShareNotification(`Section "${data.paragraph_title}" link copied to clipboard!`);
+                });
+            } else {
+                alert('Error generating share link: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to generate share link');
+        });
+    }
+
+    function shareParagraphToTwitter(paragraphId, paragraphTitle) {
+        // Generate secure share link for this paragraph
+        fetch(`/paragraph/${paragraphId}/generate-link/`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const shareUrl = encodeURIComponent(data.url);
+                const shareTitle = encodeURIComponent(`${paragraphTitle} - {{ article.title|escapejs }}`);
+                const twitterUrl = `https://twitter.com/intent/tweet?text=${shareTitle}&url=${shareUrl}`;
+                window.open(twitterUrl, '_blank', 'width=600,height=400');
+            } else {
+                alert('Error generating share link: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to generate share link');
+        });
+    }
+
+    function shareParagraphToLinkedIn(paragraphId, paragraphTitle) {
+        // Generate secure share link for this paragraph
+        fetch(`/paragraph/${paragraphId}/generate-link/`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const shareUrl = encodeURIComponent(data.url);
+                const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`;
+                window.open(linkedinUrl, '_blank', 'width=600,height=400');
+            } else {
+                alert('Error generating share link: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to generate share link');
+        });
     }
 </script>
 {% endblock %}
