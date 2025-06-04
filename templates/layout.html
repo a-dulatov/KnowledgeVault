@@ -31,12 +31,12 @@
                         <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'index' %}">Home</a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Categories
+                        <a class="nav-link dropdown-toggle" href="#" id="spacesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Spaces
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="categoriesDropdown">
-                            {% for category in categories %}
-                            <li><a class="dropdown-item" href="{% url 'category_detail' category_id=category.id %}">{{ category.name }}</a></li>
+                        <ul class="dropdown-menu" aria-labelledby="spacesDropdown">
+                            {% for space in spaces %}
+                            <li><a class="dropdown-item" href="{% url 'space_detail' space_id=space.id %}">{{ space.name }}</a></li>
                             {% endfor %}
                         </ul>
                     </li>
@@ -107,10 +107,10 @@
                     <p>A comprehensive collection of articles, guides, and tutorials.</p>
                 </div>
                 <div class="col-md-3">
-                    <h5>Categories</h5>
+                    <h5>Spaces</h5>
                     <ul class="list-unstyled">
-                        {% for category in categories %}
-                        <li><a href="{% url 'category_detail' category_id=category.id %}" class="text-decoration-none" style="color: var(--primary-corporate);">{{ category.name }}</a></li>
+                        {% for space in spaces %}
+                        <li><a href="{% url 'space_detail' space_id=space.id %}" class="text-decoration-none" style="color: var(--primary-corporate);">{{ space.name }}</a></li>
                         {% endfor %}
                     </ul>
                 </div>
