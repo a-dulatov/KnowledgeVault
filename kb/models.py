@@ -116,8 +116,9 @@ class ShareSettings(models.Model):
 
 
 class SecureShareLink(models.Model):
-    """Secure, time-limited sharing links for articles"""
+    """Secure, time-limited sharing links for articles and paragraphs"""
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='share_links')
+    paragraph = models.ForeignKey(ArticleParagraph, on_delete=models.CASCADE, related_name='share_links', null=True, blank=True)
     token = models.CharField(max_length=64, unique=True, db_index=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -135,6 +136,8 @@ class SecureShareLink(models.Model):
         ]
     
     def __str__(self):
+        if self.paragraph:
+            return f"Share link for paragraph '{self.paragraph.title}' in {self.article.title} (expires: {self.expires_at})"
         return f"Share link for '{self.article.title}' (expires: {self.expires_at})"
     
     def save(self, *args, **kwargs):
@@ -175,22 +178,35 @@ class SecureShareLink(models.Model):
     @classmethod
     def create_for_article(cls, article, user=None, custom_expiry_hours=None):
         """Create a new secure share link for an article"""
+        return cls._create_share_link(article=article, paragraph=None, user=user, custom_expiry_hours=custom_expiry_hours)
+    
+    @classmethod
+    def create_for_paragraph(cls, paragraph, user=None, custom_expiry_hours=None):
+        """Create a new secure share link for a specific paragraph"""
+        return cls._create_share_link(article=paragraph.article, paragraph=paragraph, user=user, custom_expiry_hours=custom_expiry_hours)
+    
+    @classmethod
+    def _create_share_link(cls, article, paragraph=None, user=None, custom_expiry_hours=None):
+        """Internal method to create secure share links for articles or paragraphs"""
         settings = ShareSettings.get_settings()
         
-        # Check if we've reached the maximum shares for this article
-        active_shares = cls.objects.filter(
-            article=article,
-            is_active=True,
-            expires_at__gt=timezone.now()
-        ).count()
+        # Build filter for existing shares
+        filter_params = {
+            'article': article,
+            'is_active': True,
+            'expires_at__gt': timezone.now()
+        }
+        if paragraph:
+            filter_params['paragraph'] = paragraph
+        else:
+            filter_params['paragraph__isnull'] = True
+        
+        # Check if we've reached the maximum shares for this content
+        active_shares = cls.objects.filter(**filter_params).count()
         
         if active_shares >= settings.max_shares_per_article:
             # Deactivate oldest link to make room
-            oldest_link = cls.objects.filter(
-                article=article,
-                is_active=True,
-                expires_at__gt=timezone.now()
-            ).order_by('created_at').first()
+            oldest_link = cls.objects.filter(**filter_params).order_by('created_at').first()
             if oldest_link:
                 oldest_link.is_active = False
                 oldest_link.save()
@@ -201,6 +217,7 @@ class SecureShareLink(models.Model):
         
         return cls.objects.create(
             article=article,
+            paragraph=paragraph,
             created_by=user,
             expires_at=expires_at
         )
