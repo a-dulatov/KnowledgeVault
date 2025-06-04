@@ -1,0 +1,245 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.share-card {
+    border: 2px solid #007bff;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.share-button {
+    transition: all 0.3s ease;
+    border-radius: 10px;
+}
+
+.share-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.copy-url-input {
+    border-radius: 25px;
+}
+
+.preview-card {
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    background: white;
+    color: #333;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h2><i class="fas fa-share-alt text-primary"></i> Share Article</h2>
+                <p class="text-muted">Share this knowledge with others</p>
+            </div>
+
+            <!-- Article Preview Card -->
+            <div class="card preview-card shadow mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-start">
+                        <div class="flex-grow-1">
+                            <h5 class="card-title mb-2">{{ article.title }}</h5>
+                            <p class="card-text text-muted mb-2">{{ article.summary|truncatewords:25 }}</p>
+                            <div class="d-flex align-items-center text-sm">
+                                <span class="badge bg-primary me-2">{{ article.category.name }}</span>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>{{ article.created_at|date:"M d, Y" }}
+                                    {% if article.author %}
+                                    <i class="fas fa-user ms-2 me-1"></i>{{ article.author.username }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <div class="text-center">
+                                <div class="mb-1">
+                                    <i class="fas fa-file-alt text-primary fa-2x"></i>
+                                </div>
+                                <small class="text-muted">{{ article.paragraphs.count }} section{{ article.paragraphs.count|pluralize }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Copy URL Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-link me-2"></i>Copy Link</h5>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <input type="text" class="form-control copy-url-input" id="articleUrl" value="{{ article_url }}" readonly>
+                        <button class="btn btn-primary" type="button" onclick="copyToClipboard()">
+                            <i class="fas fa-copy me-1"></i>Copy
+                        </button>
+                    </div>
+                    <small class="text-muted mt-2 d-block">Share this direct link to the article</small>
+                </div>
+            </div>
+
+            <!-- Social Media Sharing -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-share-alt me-2"></i>Share on Social Media</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Twitter -->
+                        <div class="col-md-6 col-lg-4">
+                            <a href="{{ share_urls.twitter }}" target="_blank" class="btn btn-info w-100 share-button">
+                                <i class="fab fa-twitter me-2"></i>Twitter
+                            </a>
+                        </div>
+                        
+                        <!-- Facebook -->
+                        <div class="col-md-6 col-lg-4">
+                            <a href="{{ share_urls.facebook }}" target="_blank" class="btn btn-primary w-100 share-button">
+                                <i class="fab fa-facebook-f me-2"></i>Facebook
+                            </a>
+                        </div>
+                        
+                        <!-- LinkedIn -->
+                        <div class="col-md-6 col-lg-4">
+                            <a href="{{ share_urls.linkedin }}" target="_blank" class="btn btn-dark w-100 share-button">
+                                <i class="fab fa-linkedin-in me-2"></i>LinkedIn
+                            </a>
+                        </div>
+                        
+                        <!-- Reddit -->
+                        <div class="col-md-6 col-lg-4">
+                            <a href="{{ share_urls.reddit }}" target="_blank" class="btn btn-warning w-100 share-button">
+                                <i class="fab fa-reddit-alien me-2"></i>Reddit
+                            </a>
+                        </div>
+                        
+                        <!-- Telegram -->
+                        <div class="col-md-6 col-lg-4">
+                            <a href="{{ share_urls.telegram }}" target="_blank" class="btn btn-info w-100 share-button">
+                                <i class="fab fa-telegram-plane me-2"></i>Telegram
+                            </a>
+                        </div>
+                        
+                        <!-- WhatsApp -->
+                        <div class="col-md-6 col-lg-4">
+                            <a href="{{ share_urls.whatsapp }}" target="_blank" class="btn btn-success w-100 share-button">
+                                <i class="fab fa-whatsapp me-2"></i>WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Sharing -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-envelope me-2"></i>Share via Email</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p class="mb-2">Send this article directly via email with a pre-composed message.</p>
+                            <small class="text-muted">This will open your default email client with the article details.</small>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{{ share_urls.email }}" class="btn btn-outline-primary w-100 share-button">
+                                <i class="fas fa-envelope me-2"></i>Send Email
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QR Code Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i>QR Code</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div id="qrcode" class="mb-3"></div>
+                    <p class="text-muted">Scan this QR code to open the article on mobile devices</p>
+                </div>
+            </div>
+
+            <!-- Back to Article -->
+            <div class="text-center">
+                <a href="{% url 'article_detail' article_id=article.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Article
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+// Copy URL to clipboard
+function copyToClipboard() {
+    const urlInput = document.getElementById('articleUrl');
+    urlInput.select();
+    urlInput.setSelectionRange(0, 99999); // For mobile devices
+    
+    navigator.clipboard.writeText(urlInput.value).then(function() {
+        // Show success feedback
+        const copyBtn = document.querySelector('.btn-primary');
+        const originalText = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+        copyBtn.classList.remove('btn-primary');
+        copyBtn.classList.add('btn-success');
+        
+        setTimeout(function() {
+            copyBtn.innerHTML = originalText;
+            copyBtn.classList.remove('btn-success');
+            copyBtn.classList.add('btn-primary');
+        }, 2000);
+    }).catch(function() {
+        // Fallback for older browsers
+        document.execCommand('copy');
+        alert('URL copied to clipboard!');
+    });
+}
+
+// Generate QR Code
+document.addEventListener('DOMContentLoaded', function() {
+    const qrContainer = document.getElementById('qrcode');
+    const articleUrl = document.getElementById('articleUrl').value;
+    
+    QRCode.toCanvas(qrContainer, articleUrl, {
+        width: 200,
+        height: 200,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        margin: 2
+    }, function(error) {
+        if (error) {
+            qrContainer.innerHTML = '<p class="text-muted">QR code could not be generated</p>';
+        }
+    });
+});
+
+// Add click tracking for share buttons
+document.querySelectorAll('.share-button').forEach(button => {
+    button.addEventListener('click', function() {
+        // Add visual feedback
+        this.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            this.style.transform = '';
+        }, 150);
+    });
+});
+</script>
+{% endblock %}

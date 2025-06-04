@@ -3,6 +3,36 @@
 
 {% block title %}{{ article.title }} - Knowledge Base{% endblock %}
 
+{% block extra_head %}
+<!-- Open Graph Meta Tags for Social Media Sharing -->
+<meta property="og:title" content="{{ article.title }}">
+<meta property="og:description" content="{{ article.summary|striptags|truncatewords:30 }}">
+<meta property="og:url" content="{{ request.build_absolute_uri }}">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Knowledge Base">
+<meta property="article:author" content="{% if article.author %}{{ article.author.username }}{% else %}Anonymous{% endif %}">
+<meta property="article:published_time" content="{{ article.created_at|date:'c' }}">
+<meta property="article:modified_time" content="{{ article.updated_at|date:'c' }}">
+<meta property="article:section" content="{{ article.category.name }}">
+{% for tag in article.tags %}
+<meta property="article:tag" content="{{ tag }}">
+{% endfor %}
+
+<!-- Twitter Card Meta Tags -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ article.title }}">
+<meta name="twitter:description" content="{{ article.summary|striptags|truncatewords:30 }}">
+<meta name="twitter:url" content="{{ request.build_absolute_uri }}">
+
+<!-- Additional Meta Tags -->
+<meta name="description" content="{{ article.summary|striptags }}">
+<meta name="keywords" content="{% for tag in article.tags %}{{ tag }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+<meta name="author" content="{% if article.author %}{{ article.author.username }}{% else %}Anonymous{% endif %}">
+
+<!-- Canonical URL -->
+<link rel="canonical" href="{{ request.build_absolute_uri }}">
+{% endblock %}
+
 {% block extra_css %}
 <style>
     .article-header {
@@ -44,7 +74,7 @@
                     {% endif %}
                     
                     <!-- Export Dropdown -->
-                    <div class="dropdown">
+                    <div class="dropdown me-2">
                         <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-download me-1"></i>Export
                         </button>
@@ -57,6 +87,52 @@
                             <li>
                                 <a class="dropdown-item" href="{% url 'export_article_markdown' article_id=article.id %}">
                                     <i class="fab fa-markdown text-primary me-2"></i>Export as Markdown
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Share Button -->
+                    <a href="{% url 'share_article' article_id=article.id %}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-share-alt me-1"></i>Share
+                    </a>
+                    
+                    <!-- Quick Share Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="quickShareDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-share me-1"></i>Quick Share
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="quickShareDropdown">
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="copyArticleUrl()">
+                                    <i class="fas fa-link me-2"></i>Copy Link
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="shareToTwitter()">
+                                    <i class="fab fa-twitter text-info me-2"></i>Twitter
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="shareToFacebook()">
+                                    <i class="fab fa-facebook text-primary me-2"></i>Facebook
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="shareToLinkedIn()">
+                                    <i class="fab fa-linkedin text-dark me-2"></i>LinkedIn
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="shareToWhatsApp()">
+                                    <i class="fab fa-whatsapp text-success me-2"></i>WhatsApp
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'share_article' article_id=article.id %}">
+                                    <i class="fas fa-ellipsis-h me-2"></i>More Options
                                 </a>
                             </li>
                         </ul>
@@ -316,6 +392,70 @@
             document.body.appendChild(form);
             form.submit();
         }
+    }
+
+    // Sharing functionality
+    function copyArticleUrl() {
+        const articleUrl = window.location.href;
+        navigator.clipboard.writeText(articleUrl).then(function() {
+            // Show success notification
+            showShareNotification('Link copied to clipboard!');
+        }).catch(function() {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = articleUrl;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showShareNotification('Link copied to clipboard!');
+        });
+    }
+
+    function shareToTwitter() {
+        const articleUrl = encodeURIComponent(window.location.href);
+        const articleTitle = encodeURIComponent('{{ article.title|escapejs }}');
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${articleTitle}&url=${articleUrl}`;
+        window.open(twitterUrl, '_blank', 'width=600,height=400');
+    }
+
+    function shareToFacebook() {
+        const articleUrl = encodeURIComponent(window.location.href);
+        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${articleUrl}`;
+        window.open(facebookUrl, '_blank', 'width=600,height=400');
+    }
+
+    function shareToLinkedIn() {
+        const articleUrl = encodeURIComponent(window.location.href);
+        const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${articleUrl}`;
+        window.open(linkedinUrl, '_blank', 'width=600,height=400');
+    }
+
+    function shareToWhatsApp() {
+        const articleUrl = encodeURIComponent(window.location.href);
+        const articleTitle = encodeURIComponent('{{ article.title|escapejs }}');
+        const whatsappUrl = `https://wa.me/?text=${articleTitle}%20${articleUrl}`;
+        window.open(whatsappUrl, '_blank');
+    }
+
+    function showShareNotification(message) {
+        // Create and show a temporary notification
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-success position-fixed';
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+        notification.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>${message}
+            <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 3000);
     }
 </script>
 {% endblock %}

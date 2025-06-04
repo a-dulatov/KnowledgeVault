@@ -5,12 +5,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.html import strip_tags
+from django.conf import settings
 from .models import Article, Category, ArticleAttachment, ArticleParagraph, ParagraphAttachment
 from .forms import LoginForm, RegistrationForm, ArticleForm, ParagraphForm
 from django.db.models import Q
 import json
 import markdown
 import bleach
+import urllib.parse
 from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
 
@@ -617,3 +621,70 @@ def export_article_markdown(request, article_id):
     response['Content-Disposition'] = f'attachment; filename="{article.title}.md"'
     
     return response
+
+
+def generate_share_preview(request, article_id):
+    """Generate article preview data for sharing"""
+    article = get_object_or_404(Article, id=article_id)
+    
+    # Create clean summary for sharing
+    clean_summary = strip_tags(article.summary)
+    if len(clean_summary) > 160:
+        clean_summary = clean_summary[:157] + "..."
+    
+    # Get first paragraph content for preview
+    first_paragraph = article.paragraphs.first()
+    preview_content = ""
+    if first_paragraph:
+        preview_content = strip_tags(first_paragraph.content)
+        if len(preview_content) > 300:
+            preview_content = preview_content[:297] + "..."
+    
+    # Build absolute URLs
+    article_url = request.build_absolute_uri(reverse('article_detail', args=[article.id]))
+    
+    # Prepare sharing data
+    share_data = {
+        'title': article.title,
+        'summary': clean_summary,
+        'preview_content': preview_content,
+        'url': article_url,
+        'category': article.category.name,
+        'author': article.author.username if article.author else 'Anonymous',
+        'created_date': article.created_at.strftime('%B %d, %Y'),
+        'tags': article.tags if article.tags else [],
+        'paragraph_count': article.paragraphs.count(),
+        'attachment_count': article.attachments.count(),
+    }
+    
+    return JsonResponse(share_data)
+
+
+def share_article(request, article_id):
+    """Article sharing page with custom preview"""
+    article = get_object_or_404(Article, id=article_id)
+    
+    # Build sharing URLs
+    article_url = request.build_absolute_uri(reverse('article_detail', args=[article.id]))
+    encoded_url = urllib.parse.quote(article_url)
+    encoded_title = urllib.parse.quote(article.title)
+    encoded_summary = urllib.parse.quote(strip_tags(article.summary)[:160])
+    
+    share_urls = {
+        'twitter': f"https://twitter.com/intent/tweet?text={encoded_title}&url={encoded_url}",
+        'facebook': f"https://www.facebook.com/sharer/sharer.php?u={encoded_url}",
+        'linkedin': f"https://www.linkedin.com/sharing/share-offsite/?url={encoded_url}",
+        'reddit': f"https://reddit.com/submit?url={encoded_url}&title={encoded_title}",
+        'telegram': f"https://t.me/share/url?url={encoded_url}&text={encoded_title}",
+        'whatsapp': f"https://wa.me/?text={encoded_title}%20{encoded_url}",
+        'email': f"mailto:?subject={encoded_title}&body=Check out this article: {encoded_url}"
+    }
+    
+    context = {
+        'article': article,
+        'article_url': article_url,
+        'share_urls': share_urls,
+        'title': f'Share: {article.title}'
+    }
+    
+    return render(request, 'share_article.html', context)

@@ -21,6 +21,10 @@ urlpatterns = [
     path('article/<int:article_id>/export/pdf/', views.export_article_pdf, name='export_article_pdf'),
     path('article/<int:article_id>/export/markdown/', views.export_article_markdown, name='export_article_markdown'),
     
+    # Sharing functionality
+    path('article/<int:article_id>/share/', views.share_article, name='share_article'),
+    path('article/<int:article_id>/share-preview/', views.generate_share_preview, name='generate_share_preview'),
+    
     # Paragraph management
     path('article/<int:article_id>/paragraph/add/', views.add_paragraph, name='add_paragraph'),
     path('paragraph/<int:paragraph_id>/edit/', views.edit_paragraph, name='edit_paragraph'),
