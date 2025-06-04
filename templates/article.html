@@ -928,13 +928,26 @@
     }
 
     function updateParagraphLikes(paragraphId, likeCount, dislikeCount, userAction) {
-        const paragraphElement = document.querySelector(`[data-paragraph-id="${paragraphId}"]`).closest('.paragraph');
+        const paragraphElement = document.querySelector(`#paragraph-${paragraphId}`);
+        if (!paragraphElement) {
+            console.error('Paragraph element not found:', paragraphId);
+            return;
+        }
+        
         const likeBtn = paragraphElement.querySelector('.like-btn');
         const dislikeBtn = paragraphElement.querySelector('.dislike-btn');
         
+        if (!likeBtn || !dislikeBtn) {
+            console.error('Like/dislike buttons not found in paragraph:', paragraphId);
+            return;
+        }
+        
         // Update counts
-        likeBtn.querySelector('.like-count').textContent = likeCount;
-        dislikeBtn.querySelector('.dislike-count').textContent = dislikeCount;
+        const likeCountElement = likeBtn.querySelector('.like-count');
+        const dislikeCountElement = dislikeBtn.querySelector('.dislike-count');
+        
+        if (likeCountElement) likeCountElement.textContent = likeCount;
+        if (dislikeCountElement) dislikeCountElement.textContent = dislikeCount;
         
         // Update button states
         if (userAction === true) {
