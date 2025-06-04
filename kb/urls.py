@@ -1,8 +1,10 @@
 from django.urls import path
 from . import views
+from django.views.generic import TemplateView
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('theme-preview/', TemplateView.as_view(template_name='theme_preview.html'), name='theme_preview'),
     path('article/<int:article_id>/', views.article_detail, name='article_detail'),
     path('category/<int:category_id>/', views.category_detail, name='category_detail'),
     path('search/', views.search_view, name='search'),
