@@ -28,9 +28,11 @@ def index(request):
     labels = Label.objects.all()
     latest_articles = Article.objects.order_by('-created_at')[:5]
     
-    # Add read and favorite status for authenticated users
-    if request.user.is_authenticated:
-        for article in latest_articles:
+    # Add read, favorite status, and view counts for all users
+    for article in latest_articles:
+        article.view_count = article.get_view_count()
+        article.unique_view_count = article.get_unique_view_count()
+        if request.user.is_authenticated:
             article.is_read = article.is_read_by_user(request.user)
             article.is_favorited = article.is_favorited_by_user(request.user)
     
@@ -84,9 +86,11 @@ def space_detail(request, space_id):
     space = get_object_or_404(Space, id=space_id)
     articles = Article.objects.filter(space=space)
     
-    # Add read and favorite status for authenticated users
-    if request.user.is_authenticated:
-        for article in articles:
+    # Add read, favorite status, and view counts for all users
+    for article in articles:
+        article.view_count = article.get_view_count()
+        article.unique_view_count = article.get_unique_view_count()
+        if request.user.is_authenticated:
             article.is_read = article.is_read_by_user(request.user)
             article.is_favorited = article.is_favorited_by_user(request.user)
     
