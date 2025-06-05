@@ -213,7 +213,7 @@
                     <span class="badge bg-success me-2">Read</span>
                     {% endif %}
                     {% if user.is_authenticated %}
-                    <button class="btn btn-link p-0 favorite-btn" 
+                    <button class="btn btn-link p-0 me-2 favorite-btn" 
                             data-article-id="{{ article.id }}" 
                             data-favorited="{% if article.is_favorited %}true{% else %}false{% endif %}"
                             title="{% if article.is_favorited %}Remove from favorites{% else %}Add to favorites{% endif %}">
@@ -221,6 +221,16 @@
                         <i class="fas fa-heart text-danger fa-lg"></i>
                         {% else %}
                         <i class="far fa-heart text-muted fa-lg"></i>
+                        {% endif %}
+                    </button>
+                    <button class="btn btn-link p-0 read-later-btn" 
+                            data-article-id="{{ article.id }}" 
+                            data-read-later="{% if article.is_read_later %}true{% else %}false{% endif %}"
+                            title="{% if article.is_read_later %}Remove from read later{% else %}Save for later reading{% endif %}">
+                        {% if article.is_read_later %}
+                        <i class="fas fa-bookmark text-primary fa-lg"></i>
+                        {% else %}
+                        <i class="far fa-bookmark text-muted fa-lg"></i>
                         {% endif %}
                     </button>
                     {% endif %}
@@ -1199,6 +1209,40 @@
             dislikeBtn.classList.remove('btn-danger');
             dislikeBtn.classList.add('btn-outline-danger');
         }
+    }
+
+    // Read later button functionality
+    const readLaterBtn = document.querySelector('.read-later-btn');
+    if (readLaterBtn) {
+        readLaterBtn.addEventListener('click', function() {
+            const articleId = this.dataset.articleId;
+            
+            fetch(`/article/${articleId}/toggle-read-later/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.is_read_later) {
+                    this.innerHTML = '<i class="fas fa-bookmark text-primary fa-lg"></i>';
+                    this.dataset.readLater = 'true';
+                    this.title = 'Remove from read later';
+                    showShareNotification('Article saved for later reading!');
+                } else {
+                    this.innerHTML = '<i class="far fa-bookmark text-muted fa-lg"></i>';
+                    this.dataset.readLater = 'false';
+                    this.title = 'Save for later reading';
+                    showShareNotification('Article removed from read later!');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update read later status');
+            });
+        });
     }
 </script>
 {% endblock %}
