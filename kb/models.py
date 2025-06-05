@@ -126,6 +126,10 @@ class Article(models.Model):
             return False
         return self.favorites.filter(user=user).exists()
     
+    def get_favorites_count(self):
+        """Get total number of users who favorited this article"""
+        return self.favorites.count()
+    
     def get_view_count(self):
         """Get total number of views for this article"""
         return self.views.count()

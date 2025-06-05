@@ -32,6 +32,7 @@ def index(request):
     for article in latest_articles:
         article.view_count = article.get_view_count()
         article.unique_view_count = article.get_unique_view_count()
+        article.favorites_count = article.get_favorites_count()
         if request.user.is_authenticated:
             article.is_read = article.is_read_by_user(request.user)
             article.is_favorited = article.is_favorited_by_user(request.user)
@@ -78,6 +79,7 @@ def article_detail(request, article_id):
         'comment_count': article.comment_count(),
         'view_count': article.get_view_count(),
         'unique_view_count': article.get_unique_view_count(),
+        'favorites_count': article.get_favorites_count(),
     }
     return render(request, 'article.html', context)
 
@@ -90,6 +92,7 @@ def space_detail(request, space_id):
     for article in articles:
         article.view_count = article.get_view_count()
         article.unique_view_count = article.get_unique_view_count()
+        article.favorites_count = article.get_favorites_count()
         if request.user.is_authenticated:
             article.is_read = article.is_read_by_user(request.user)
             article.is_favorited = article.is_favorited_by_user(request.user)
