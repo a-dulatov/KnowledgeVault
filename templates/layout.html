@@ -100,6 +100,9 @@
 
     <!-- Main content -->
     <main class="container py-4">
+        <!-- CSRF Token for AJAX requests -->
+        {% csrf_token %}
+        
         <!-- Messages -->
         {% if messages %}
         <div class="messages">
