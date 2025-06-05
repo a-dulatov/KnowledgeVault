@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (Label, Space, Article, ArticleAttachment, ArticleParagraph, 
                      ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView,
-                     ArticleRating, ArticleComment, ParagraphLike)
+                     ArticleRating, ArticleComment, ParagraphLike, ArticleReadStatus)
 
 class ArticleAttachmentInline(admin.TabularInline):
     model = ArticleAttachment
@@ -206,3 +206,16 @@ class ParagraphLikeAdmin(admin.ModelAdmin):
     search_fields = ('paragraph__title', 'paragraph__article__title', 'user__username')
     readonly_fields = ('created_at', 'updated_at')
     ordering = ['-created_at']
+
+
+@admin.register(ArticleReadStatus)
+class ArticleReadStatusAdmin(admin.ModelAdmin):
+    list_display = ('article', 'user', 'read_count', 'first_read_at', 'last_read_at')
+    list_filter = ('first_read_at', 'last_read_at', 'article__space')
+    search_fields = ('article__title', 'user__username')
+    readonly_fields = ('first_read_at', 'last_read_at')
+    ordering = ['-last_read_at']
+    
+    def has_add_permission(self, request):
+        # Prevent manual creation of read status records
+        return False
