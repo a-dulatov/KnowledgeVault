@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
 from .models import (Label, Article, Space, ArticleAttachment, ArticleParagraph, 
                      ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView,
-                     ArticleRating, ArticleComment, ParagraphLike, ArticleReadStatus, ArticleFavorite)
+                     ArticleRating, ArticleComment, ParagraphLike, ArticleReadStatus, ArticleFavorite, ReadLater)
 from .forms import LoginForm, RegistrationForm, ArticleForm, ParagraphForm
 from django.db.models import Q
 import json
@@ -1099,3 +1099,47 @@ def my_favorites(request):
         'labels': Label.objects.all(),
     }
     return render(request, 'my_favorites.html', context)
+
+
+@login_required
+def toggle_read_later(request, article_id):
+    """Toggle read later status for an article"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    article = get_object_or_404(Article, id=article_id)
+    
+    read_later, created = ReadLater.objects.get_or_create(
+        article=article,
+        user=request.user
+    )
+    
+    if not created:
+        # Remove from read later if it already exists
+        read_later.delete()
+        is_read_later = False
+    else:
+        is_read_later = True
+    
+    return JsonResponse({
+        'is_read_later': is_read_later,
+        'message': 'Article saved for later reading' if is_read_later else 'Article removed from read later'
+    })
+
+
+@login_required
+def my_read_later(request):
+    """Display user's read later articles"""
+    # Get read later articles for the current user
+    read_later_articles = ReadLater.objects.filter(user=request.user).select_related('article__space').order_by('-created_at')
+    
+    # Get spaces and labels for filtering
+    spaces = Space.objects.all()
+    labels = Label.objects.all()
+    
+    context = {
+        'read_later_articles': read_later_articles,
+        'spaces': spaces,
+        'labels': labels,
+    }
+    return render(request, 'my_read_later.html', context)

@@ -1,0 +1,214 @@
+{% extends 'layout.html' %}
+
+{% block title %}My Read Later - Knowledge Base{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Filter by Space</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="spaceFilter" id="all-spaces" value="" checked>
+                        <label class="form-check-label" for="all-spaces">
+                            All Spaces
+                        </label>
+                    </div>
+                    {% for space in spaces %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="spaceFilter" id="space-{{ space.id }}" value="{{ space.id }}">
+                        <label class="form-check-label" for="space-{{ space.id }}">
+                            <i class="{{ space.icon }}"></i> {{ space.name }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Filter by Label</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="labelFilter" id="all-labels" value="" checked>
+                        <label class="form-check-label" for="all-labels">
+                            All Labels
+                        </label>
+                    </div>
+                    {% for label in labels %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="labelFilter" id="label-{{ label.id }}" value="{{ label.id }}">
+                        <label class="form-check-label" for="label-{{ label.id }}">
+                            <span class="badge" style="background-color: {{ label.color }};">{{ label.name }}</span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>My Read Later</h2>
+                <span class="badge bg-secondary">{{ read_later_articles|length }} article{{ read_later_articles|length|pluralize }}</span>
+            </div>
+
+            {% if read_later_articles %}
+                <div class="row" id="articles-container">
+                    {% for read_later in read_later_articles %}
+                        <div class="col-12 mb-3 article-item" 
+                             data-space-id="{{ read_later.article.space.id }}" 
+                             data-label-id="{% if read_later.article.space.label %}{{ read_later.article.space.label.id }}{% endif %}">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <h5 class="card-title">
+                                                <a href="{% url 'article_detail' read_later.article.id %}" class="text-decoration-none">
+                                                    {{ read_later.article.title }}
+                                                </a>
+                                            </h5>
+                                            <p class="card-text">{{ read_later.article.summary|truncatewords:30 }}</p>
+                                            <div class="mb-2">
+                                                {% for tag in read_later.article.tags %}
+                                                    <span class="badge bg-info me-1">{{ tag }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="text-end">
+                                                <div class="mb-2">
+                                                    <span class="badge bg-primary">
+                                                        <i class="{{ read_later.article.space.icon }}"></i> {{ read_later.article.space.name }}
+                                                    </span>
+                                                    {% if read_later.article.space.label %}
+                                                        <span class="badge" style="background-color: {{ read_later.article.space.label.color }};">
+                                                            {{ read_later.article.space.label.name }}
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="small text-muted mb-2">
+                                                    <i class="fas fa-eye"></i> {{ read_later.article.get_view_count }} views
+                                                    <i class="fas fa-heart ms-2"></i> {{ read_later.article.get_favorites_count }} favorites
+                                                </div>
+                                                <div class="small text-muted">
+                                                    Saved: {{ read_later.created_at|date:"M d, Y" }}
+                                                </div>
+                                                {% if user.is_authenticated %}
+                                                <div class="mt-2">
+                                                    <button class="btn btn-sm btn-outline-danger toggle-read-later" 
+                                                            data-article-id="{{ read_later.article.id }}"
+                                                            data-bs-toggle="tooltip" 
+                                                            title="Remove from read later">
+                                                        <i class="fas fa-bookmark"></i> Remove
+                                                    </button>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-bookmark fa-3x text-muted mb-3"></i>
+                    <h4>No articles saved for later</h4>
+                    <p class="text-muted">Start browsing articles and save them to read later!</p>
+                    <a href="{% url 'index' %}" class="btn btn-primary">Browse Articles</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filter functionality
+    const spaceFilters = document.querySelectorAll('input[name="spaceFilter"]');
+    const labelFilters = document.querySelectorAll('input[name="labelFilter"]');
+    const articles = document.querySelectorAll('.article-item');
+
+    function filterArticles() {
+        const selectedSpace = document.querySelector('input[name="spaceFilter"]:checked').value;
+        const selectedLabel = document.querySelector('input[name="labelFilter"]:checked').value;
+
+        articles.forEach(article => {
+            const articleSpace = article.dataset.spaceId;
+            const articleLabel = article.dataset.labelId;
+            
+            let showArticle = true;
+            
+            if (selectedSpace && articleSpace !== selectedSpace) {
+                showArticle = false;
+            }
+            
+            if (selectedLabel && articleLabel !== selectedLabel) {
+                showArticle = false;
+            }
+            
+            article.style.display = showArticle ? 'block' : 'none';
+        });
+    }
+
+    spaceFilters.forEach(filter => {
+        filter.addEventListener('change', filterArticles);
+    });
+
+    labelFilters.forEach(filter => {
+        filter.addEventListener('change', filterArticles);
+    });
+
+    // Read later toggle functionality
+    const toggleButtons = document.querySelectorAll('.toggle-read-later');
+    
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const articleId = this.dataset.articleId;
+            
+            fetch(`/article/${articleId}/toggle-read-later/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.is_read_later === false) {
+                    // Remove the article from the page
+                    const articleElement = this.closest('.article-item');
+                    articleElement.remove();
+                    
+                    // Update count
+                    const countBadge = document.querySelector('.badge.bg-secondary');
+                    const currentCount = parseInt(countBadge.textContent);
+                    const newCount = currentCount - 1;
+                    countBadge.textContent = `${newCount} article${newCount !== 1 ? 's' : ''}`;
+                    
+                    // Show empty state if no articles left
+                    if (newCount === 0) {
+                        location.reload();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    });
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

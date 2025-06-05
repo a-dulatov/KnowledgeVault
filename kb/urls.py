@@ -47,6 +47,10 @@ urlpatterns = [
     path('article/<int:article_id>/toggle-favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('my-favorites/', views.my_favorites, name='my_favorites'),
     
+    # Read Later
+    path('article/<int:article_id>/toggle-read-later/', views.toggle_read_later, name='toggle_read_later'),
+    path('my-read-later/', views.my_read_later, name='my_read_later'),
+    
     # API endpoints
     path('api/search/', views.api_search, name='api_search'),
     path('api/articles/', views.api_articles, name='api_articles'),
