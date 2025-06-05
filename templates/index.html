@@ -157,4 +157,40 @@
         {% endfor %}
     </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Read later button functionality
+    const readLaterBtns = document.querySelectorAll('.read-later-btn');
+    
+    readLaterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const articleId = this.dataset.articleId;
+            
+            fetch(`/article/${articleId}/toggle-read-later/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.is_read_later) {
+                    this.innerHTML = '<i class="fas fa-bookmark text-primary"></i>';
+                    this.dataset.readLater = 'true';
+                    this.title = 'Remove from read later';
+                } else {
+                    this.innerHTML = '<i class="far fa-bookmark text-muted"></i>';
+                    this.dataset.readLater = 'false';
+                    this.title = 'Save for later reading';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

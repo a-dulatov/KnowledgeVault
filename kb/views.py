@@ -97,6 +97,7 @@ def space_detail(request, space_id):
         if request.user.is_authenticated:
             article.is_read = article.is_read_by_user(request.user)
             article.is_favorited = article.is_favorited_by_user(request.user)
+            article.is_read_later = article.is_read_later_by_user(request.user)
     
     context = {
         'space': space,
@@ -116,6 +117,16 @@ def search_view(request):
             Q(summary__icontains=query) |
             Q(tags__contains=query)
         )
+        
+        # Add read, favorite status, and view counts for all users
+        for article in articles:
+            article.view_count = article.get_view_count()
+            article.unique_view_count = article.get_unique_view_count()
+            article.favorites_count = article.get_favorites_count()
+            if request.user.is_authenticated:
+                article.is_read = article.is_read_by_user(request.user)
+                article.is_favorited = article.is_favorited_by_user(request.user)
+                article.is_read_later = article.is_read_later_by_user(request.user)
     else:
         articles = []
     
