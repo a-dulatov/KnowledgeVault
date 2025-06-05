@@ -1083,9 +1083,12 @@ def my_favorites(request):
     favorites = ArticleFavorite.objects.filter(user=request.user).select_related('article', 'article__space')
     articles = [favorite.article for favorite in favorites]
     
-    # Add favorite status for each article
+    # Add favorite status, view counts, and favorites count for each article
     for article in articles:
         article.is_favorited = True  # All articles in this view are favorited
+        article.view_count = article.get_view_count()
+        article.unique_view_count = article.get_unique_view_count()
+        article.favorites_count = article.get_favorites_count()
         if request.user.is_authenticated:
             article.is_read = article.is_read_by_user(request.user)
     

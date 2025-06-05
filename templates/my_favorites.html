@@ -96,6 +96,13 @@
                                         <i class="fas fa-calendar me-1"></i>
                                         {{ article.created_at|date:"M d, Y" }}
                                     </span>
+                                    <span class="me-3">
+                                        <i class="fas fa-eye me-1"></i>{{ article.view_count }} views
+                                        <span class="mx-1">•</span>
+                                        <i class="fas fa-users me-1"></i>{{ article.unique_view_count }} unique
+                                        <span class="mx-1">•</span>
+                                        <i class="fas fa-heart me-1"></i>{{ article.favorites_count }} favorites
+                                    </span>
                                     {% if article.tags %}
                                     <span>
                                         <i class="fas fa-tags me-1"></i>
