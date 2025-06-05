@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
 from .models import (Label, Article, Space, ArticleAttachment, ArticleParagraph, 
                      ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView,
-                     ArticleRating, ArticleComment, ParagraphLike)
+                     ArticleRating, ArticleComment, ParagraphLike, ArticleReadStatus)
 from .forms import LoginForm, RegistrationForm, ArticleForm, ParagraphForm
 from django.db.models import Q
 import json
@@ -39,6 +39,10 @@ def index(request):
 def article_detail(request, article_id):
     """Display a single article"""
     article = get_object_or_404(Article, id=article_id)
+    
+    # Mark article as read for authenticated users
+    if request.user.is_authenticated:
+        ArticleReadStatus.mark_as_read(article, request.user)
     
     # Get rating and comment data
     user_rating = None

@@ -104,6 +104,21 @@ class Article(models.Model):
     def comment_count(self):
         """Get total number of approved comments"""
         return self.comments.filter(is_approved=True, parent__isnull=True).count()
+    
+    def is_read_by_user(self, user):
+        """Check if article has been read by a specific user"""
+        if not user.is_authenticated:
+            return False
+        return self.read_status.filter(user=user).exists()
+    
+    def get_read_status(self, user):
+        """Get read status object for a user"""
+        if not user.is_authenticated:
+            return None
+        try:
+            return self.read_status.get(user=user)
+        except ArticleReadStatus.DoesNotExist:
+            return None
 
 
 class ArticleParagraph(models.Model):
@@ -396,3 +411,40 @@ class ParagraphLike(models.Model):
     def __str__(self):
         action = "liked" if self.is_like else "disliked"
         return f"{self.user.username} {action} paragraph: {self.paragraph.title}"
+
+
+class ArticleReadStatus(models.Model):
+    """Track when registered users read articles"""
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='read_status')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    first_read_at = models.DateTimeField(auto_now_add=True)
+    last_read_at = models.DateTimeField(auto_now=True)
+    read_count = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        unique_together = ('article', 'user')
+        indexes = [
+            models.Index(fields=['user', 'last_read_at']),
+            models.Index(fields=['article', 'user']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} read '{self.article.title}'"
+
+    @classmethod
+    def mark_as_read(cls, article, user):
+        """Mark an article as read by a user, or update read count if already read"""
+        if not user.is_authenticated:
+            return None
+            
+        read_status, created = cls.objects.get_or_create(
+            article=article,
+            user=user,
+            defaults={'read_count': 1}
+        )
+        
+        if not created:
+            read_status.read_count += 1
+            read_status.save(update_fields=['last_read_at', 'read_count'])
+            
+        return read_status
