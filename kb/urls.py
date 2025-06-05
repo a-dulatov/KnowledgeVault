@@ -43,6 +43,10 @@ urlpatterns = [
     path('article/<int:article_id>/comment/', views.comment_article, name='comment_article'),
     path('paragraph/<int:paragraph_id>/like/', views.like_paragraph, name='like_paragraph'),
     
+    # Favorites
+    path('article/<int:article_id>/toggle-favorite/', views.toggle_favorite, name='toggle_favorite'),
+    path('my-favorites/', views.my_favorites, name='my_favorites'),
+    
     # API endpoints
     path('api/search/', views.api_search, name='api_search'),
     path('api/articles/', views.api_articles, name='api_articles'),

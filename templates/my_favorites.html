@@ -1,0 +1,175 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-3">
+            <!-- Sidebar with spaces and labels -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Spaces</h5>
+                </div>
+                <div class="card-body">
+                    {% for space in spaces %}
+                    <div class="d-flex align-items-center mb-2">
+                        {% if space.icon %}
+                        <i class="{{ space.icon }} me-2"></i>
+                        {% endif %}
+                        <a href="{% url 'space_detail' space.id %}" class="text-decoration-none">
+                            {{ space.name }}
+                        </a>
+                        {% if space.label %}
+                        <span class="badge ms-2" style="background-color: {{ space.label.color }};">
+                            {{ space.label.name }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>My Favorites</h1>
+                <div class="d-flex gap-2 align-items-center">
+                    <!-- View Density Control -->
+                    <div class="btn-group" role="group" aria-label="View density">
+                        <input type="radio" class="btn-check" name="viewDensity" id="compact" value="compact">
+                        <label class="btn btn-outline-secondary btn-sm" for="compact" title="Compact view">
+                            <i class="fas fa-compress-alt"></i>
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="viewDensity" id="comfortable" value="comfortable" checked>
+                        <label class="btn btn-outline-secondary btn-sm" for="comfortable" title="Comfortable view">
+                            <i class="fas fa-list"></i>
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="viewDensity" id="spacious" value="spacious">
+                        <label class="btn btn-outline-secondary btn-sm" for="spacious" title="Spacious view">
+                            <i class="fas fa-expand-alt"></i>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            {% if articles %}
+            <div id="articles-container">
+                {% for article in articles %}
+                <div class="card mb-3 article-card" data-space="{{ article.space.id }}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <h5 class="card-title mb-0 me-3">
+                                        <a href="{% url 'article_detail' article.id %}" class="text-decoration-none">
+                                            {{ article.title }}
+                                        </a>
+                                    </h5>
+                                    
+                                    <!-- Read badge -->
+                                    {% if user.is_authenticated and article.is_read %}
+                                    <span class="badge bg-success me-2">Read</span>
+                                    {% endif %}
+                                    
+                                    <!-- Favorite icon (always filled since this is favorites page) -->
+                                    {% if user.is_authenticated %}
+                                    <button class="btn btn-link p-0 favorite-btn" 
+                                            data-article-id="{{ article.id }}" 
+                                            data-favorited="true" 
+                                            title="Remove from favorites">
+                                        <i class="fas fa-heart text-danger"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                
+                                <p class="card-text article-summary">{{ article.summary }}</p>
+                                
+                                <div class="d-flex align-items-center text-muted small article-meta">
+                                    <span class="me-3">
+                                        <i class="fas fa-folder me-1"></i>
+                                        <a href="{% url 'space_detail' article.space.id %}" class="text-decoration-none">
+                                            {{ article.space.name }}
+                                        </a>
+                                    </span>
+                                    <span class="me-3">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ article.created_at|date:"M d, Y" }}
+                                    </span>
+                                    {% if article.tags %}
+                                    <span>
+                                        <i class="fas fa-tags me-1"></i>
+                                        {% for tag in article.tags %}
+                                            <span class="badge bg-secondary me-1">{{ tag }}</span>
+                                        {% endfor %}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+                <h3 class="text-muted">No Favorites Yet</h3>
+                <p class="text-muted">Start adding articles to your favorites by clicking the heart icon on any article.</p>
+                <a href="{% url 'index' %}" class="btn btn-primary">Browse Articles</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle favorite toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const favoriteButtons = document.querySelectorAll('.favorite-btn');
+    
+    favoriteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const articleId = this.dataset.articleId;
+            const isFavorited = this.dataset.favorited === 'true';
+            
+            fetch(`/article/${articleId}/toggle-favorite/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.is_favorited) {
+                        this.innerHTML = '<i class="fas fa-heart text-danger"></i>';
+                        this.dataset.favorited = 'true';
+                        this.title = 'Remove from favorites';
+                    } else {
+                        // If unfavorited on favorites page, remove the article card
+                        this.closest('.article-card').remove();
+                        
+                        // Check if no articles left
+                        if (document.querySelectorAll('.article-card').length === 0) {
+                            document.getElementById('articles-container').innerHTML = `
+                                <div class="text-center py-5">
+                                    <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+                                    <h3 class="text-muted">No Favorites Yet</h3>
+                                    <p class="text-muted">Start adding articles to your favorites by clicking the heart icon on any article.</p>
+                                    <a href="/" class="btn btn-primary">Browse Articles</a>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

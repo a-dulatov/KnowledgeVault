@@ -28,10 +28,11 @@ def index(request):
     labels = Label.objects.all()
     latest_articles = Article.objects.order_by('-created_at')[:5]
     
-    # Add read status for authenticated users
+    # Add read and favorite status for authenticated users
     if request.user.is_authenticated:
         for article in latest_articles:
             article.is_read = article.is_read_by_user(request.user)
+            article.is_favorited = article.is_favorited_by_user(request.user)
     
     context = {
         'spaces': spaces,
@@ -57,9 +58,10 @@ def article_detail(request, article_id):
     # Get approved comments (only top-level comments, replies are loaded via model method)
     comments = article.comments.filter(is_approved=True, parent__isnull=True).order_by('-created_at')
     
-    # Add read status for the current article
+    # Add read and favorite status for the current article
     if request.user.is_authenticated:
         article.is_read = article.is_read_by_user(request.user)
+        article.is_favorited = article.is_favorited_by_user(request.user)
     
     context = {
         'article': article,
@@ -77,10 +79,11 @@ def space_detail(request, space_id):
     space = get_object_or_404(Space, id=space_id)
     articles = Article.objects.filter(space=space)
     
-    # Add read status for authenticated users
+    # Add read and favorite status for authenticated users
     if request.user.is_authenticated:
         for article in articles:
             article.is_read = article.is_read_by_user(request.user)
+            article.is_favorited = article.is_favorited_by_user(request.user)
     
     context = {
         'space': space,
