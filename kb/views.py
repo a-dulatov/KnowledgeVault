@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
 from .models import (Label, Article, Space, ArticleAttachment, ArticleParagraph, 
                      ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView,
-                     ArticleRating, ArticleComment, ParagraphLike, ArticleReadStatus)
+                     ArticleRating, ArticleComment, ParagraphLike, ArticleReadStatus, ArticleFavorite)
 from .forms import LoginForm, RegistrationForm, ArticleForm, ParagraphForm
 from django.db.models import Q
 import json
@@ -1033,3 +1033,51 @@ def like_paragraph(request, paragraph_id):
         'dislike_count': paragraph.dislike_count(),
         'user_action': user_action
     })
+
+
+@login_required
+def toggle_favorite(request, article_id):
+    """Toggle favorite status for an article"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    article = get_object_or_404(Article, id=article_id)
+    
+    favorite, created = ArticleFavorite.objects.get_or_create(
+        article=article,
+        user=request.user
+    )
+    
+    if not created:
+        # If favorite exists, remove it (unfavorite)
+        favorite.delete()
+        is_favorited = False
+    else:
+        # New favorite was created
+        is_favorited = True
+    
+    return JsonResponse({
+        'success': True,
+        'is_favorited': is_favorited
+    })
+
+
+@login_required
+def my_favorites(request):
+    """Display user's favorite articles"""
+    favorites = ArticleFavorite.objects.filter(user=request.user).select_related('article', 'article__space')
+    articles = [favorite.article for favorite in favorites]
+    
+    # Add favorite status for each article
+    for article in articles:
+        article.is_favorited = True  # All articles in this view are favorited
+        if request.user.is_authenticated:
+            article.is_read = article.is_read_by_user(request.user)
+    
+    context = {
+        'articles': articles,
+        'title': 'My Favorites',
+        'spaces': Space.objects.all(),
+        'labels': Label.objects.all(),
+    }
+    return render(request, 'my_favorites.html', context)

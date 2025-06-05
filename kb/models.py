@@ -119,6 +119,12 @@ class Article(models.Model):
             return self.read_status.get(user=user)
         except ArticleReadStatus.DoesNotExist:
             return None
+    
+    def is_favorited_by_user(self, user):
+        """Check if this article has been favorited by the given user"""
+        if not user.is_authenticated:
+            return False
+        return self.favorites.filter(user=user).exists()
 
 
 class ArticleParagraph(models.Model):
@@ -448,3 +454,17 @@ class ArticleReadStatus(models.Model):
             read_status.save(update_fields=['last_read_at', 'read_count'])
             
         return read_status
+
+
+class ArticleFavorite(models.Model):
+    """Track articles favorited by users"""
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='favorites')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorite_articles')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('article', 'user')
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} favorited '{self.article.title}'"
