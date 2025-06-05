@@ -34,9 +34,23 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <h5 class="card-title">{{ article.title }}</h5>
-                        {% if user.is_authenticated and article.is_read %}
-                        <span class="badge bg-success">Read</span>
-                        {% endif %}
+                        <div class="d-flex align-items-center">
+                            {% if user.is_authenticated and article.is_read %}
+                            <span class="badge bg-success me-2">Read</span>
+                            {% endif %}
+                            {% if user.is_authenticated %}
+                            <button class="btn btn-link p-0 favorite-btn" 
+                                    data-article-id="{{ article.id }}" 
+                                    data-favorited="{% if article.is_favorited %}true{% else %}false{% endif %}"
+                                    title="{% if article.is_favorited %}Remove from favorites{% else %}Add to favorites{% endif %}">
+                                {% if article.is_favorited %}
+                                <i class="fas fa-heart text-danger"></i>
+                                {% else %}
+                                <i class="far fa-heart text-muted"></i>
+                                {% endif %}
+                            </button>
+                            {% endif %}
+                        </div>
                     </div>
                     <p class="card-text">{{ article.summary }}</p>
                     
