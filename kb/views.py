@@ -36,6 +36,7 @@ def index(request):
         if request.user.is_authenticated:
             article.is_read = article.is_read_by_user(request.user)
             article.is_favorited = article.is_favorited_by_user(request.user)
+            article.is_read_later = article.is_read_later_by_user(request.user)
     
     context = {
         'spaces': spaces,
