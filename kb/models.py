@@ -130,6 +130,12 @@ class Article(models.Model):
         """Get total number of users who favorited this article"""
         return self.favorites.count()
     
+    def is_read_later_by_user(self, user):
+        """Check if this article has been saved for later reading by the given user"""
+        if not user.is_authenticated:
+            return False
+        return self.read_later.filter(user=user).exists()
+    
     def get_view_count(self):
         """Get total number of views for this article"""
         return self.views.count()
@@ -532,3 +538,21 @@ class ArticleView(models.Model):
     def __str__(self):
         user_info = self.user.username if self.user else f"Anonymous ({self.ip_address})"
         return f"{user_info} viewed '{self.article.title}' at {self.viewed_at}"
+
+
+class ReadLater(models.Model):
+    """Track articles saved for later reading by users"""
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='read_later')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='read_later_articles')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('article', 'user')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['article', 'user']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} saved {self.article.title} to read later"
