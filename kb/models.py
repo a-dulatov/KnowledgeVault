@@ -125,6 +125,43 @@ class Article(models.Model):
         if not user.is_authenticated:
             return False
         return self.favorites.filter(user=user).exists()
+    
+    def get_view_count(self):
+        """Get total number of views for this article"""
+        return self.views.count()
+    
+    def get_unique_view_count(self):
+        """Get unique views (by user/IP) for this article"""
+        # Count unique users + unique anonymous IPs
+        user_views = self.views.filter(user__isnull=False).values('user').distinct().count()
+        anonymous_views = self.views.filter(user__isnull=True).values('ip_address').distinct().count()
+        return user_views + anonymous_views
+    
+    def record_view(self, request):
+        """Record a view for this article"""
+        # Get client IP
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR', '127.0.0.1')
+        
+        # Get user agent and referrer
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        referrer = request.META.get('HTTP_REFERER', '')
+        
+        # For anonymous users, use session key
+        session_key = request.session.session_key or ''
+        
+        # Create view record
+        ArticleView.objects.create(
+            article=self,
+            user=request.user if request.user.is_authenticated else None,
+            ip_address=ip,
+            user_agent=user_agent,
+            referrer=referrer,
+            session_key=session_key
+        )
 
 
 class ArticleParagraph(models.Model):
@@ -468,3 +505,26 @@ class ArticleFavorite(models.Model):
     
     def __str__(self):
         return f"{self.user.username} favorited '{self.article.title}'"
+
+
+class ArticleView(models.Model):
+    """Track article views for both registered and anonymous users"""
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='views')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  # None for anonymous users
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField(blank=True)
+    referrer = models.URLField(blank=True, null=True)
+    session_key = models.CharField(max_length=40, blank=True)  # For anonymous users
+    viewed_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-viewed_at']
+        indexes = [
+            models.Index(fields=['article', '-viewed_at']),
+            models.Index(fields=['user', '-viewed_at']),
+            models.Index(fields=['ip_address', '-viewed_at']),
+        ]
+    
+    def __str__(self):
+        user_info = self.user.username if self.user else f"Anonymous ({self.ip_address})"
+        return f"{user_info} viewed '{self.article.title}' at {self.viewed_at}"

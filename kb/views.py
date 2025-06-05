@@ -46,6 +46,9 @@ def article_detail(request, article_id):
     """Display a single article"""
     article = get_object_or_404(Article, id=article_id)
     
+    # Record view for both authenticated and anonymous users
+    article.record_view(request)
+    
     # Mark article as read for authenticated users
     if request.user.is_authenticated:
         ArticleReadStatus.mark_as_read(article, request.user)
@@ -71,6 +74,8 @@ def article_detail(request, article_id):
         'average_rating': article.average_rating(),
         'rating_count': article.rating_count(),
         'comment_count': article.comment_count(),
+        'view_count': article.get_view_count(),
+        'unique_view_count': article.get_unique_view_count(),
     }
     return render(request, 'article.html', context)
 
