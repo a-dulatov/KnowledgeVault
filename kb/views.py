@@ -26,7 +26,17 @@ def index(request):
     """Home page with featured articles and spaces"""
     spaces = Space.objects.select_related('label').all()
     labels = Label.objects.all()
-    latest_articles = Article.objects.order_by('-created_at')[:5]
+    
+    # Filter articles based on status and user permissions
+    if request.user.is_authenticated:
+        # Authenticated users see Live articles + their own Draft articles
+        latest_articles = Article.objects.filter(
+            models.Q(status='live') | 
+            models.Q(status='draft', author=request.user)
+        ).order_by('-created_at')[:5]
+    else:
+        # Anonymous users see only Live articles
+        latest_articles = Article.objects.filter(status='live').order_by('-created_at')[:5]
     
     # Add read, favorite status, and view counts for all users
     for article in latest_articles:
@@ -87,7 +97,19 @@ def article_detail(request, article_id):
 def space_detail(request, space_id):
     """Display articles in a space"""
     space = get_object_or_404(Space, id=space_id)
-    articles = Article.objects.filter(space=space)
+    
+    # Filter articles based on status and user permissions
+    if request.user.is_authenticated:
+        # Authenticated users see Live articles + their own Draft articles
+        articles = Article.objects.filter(
+            space=space
+        ).filter(
+            models.Q(status='live') | 
+            models.Q(status='draft', author=request.user)
+        )
+    else:
+        # Anonymous users see only Live articles
+        articles = Article.objects.filter(space=space, status='live')
     
     # Add read, favorite status, and view counts for all users
     for article in articles:

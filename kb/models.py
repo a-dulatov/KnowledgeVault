@@ -65,10 +65,17 @@ class Space(models.Model):
         verbose_name_plural = "Spaces"
 
 class Article(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('live', 'Live'),
+        ('archive', 'Archive'),
+    ]
+    
     title = models.CharField(max_length=200)
     summary = models.TextField()
     space = models.ForeignKey(Space, on_delete=models.CASCADE, related_name='articles')
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='articles', null=True, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
     tags = models.JSONField(default=list)
     created_at = models.DateField(default=timezone.now)
     updated_at = models.DateField(default=timezone.now)
