@@ -10,6 +10,7 @@ from django.utils.html import strip_tags
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import get_token
+from django.db.models import Q
 from .models import (Label, Article, Space, ArticleAttachment, ArticleParagraph, 
                      ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView,
                      ArticleRating, ArticleComment, ParagraphLike, ArticleReadStatus, ArticleFavorite, ReadLater)
@@ -31,8 +32,8 @@ def index(request):
     if request.user.is_authenticated:
         # Authenticated users see Live articles + their own Draft articles
         latest_articles = Article.objects.filter(
-            models.Q(status='live') | 
-            models.Q(status='draft', author=request.user)
+            Q(status='live') | 
+            Q(status='draft', author=request.user)
         ).order_by('-created_at')[:5]
     else:
         # Anonymous users see only Live articles
@@ -104,8 +105,8 @@ def space_detail(request, space_id):
         articles = Article.objects.filter(
             space=space
         ).filter(
-            models.Q(status='live') | 
-            models.Q(status='draft', author=request.user)
+            Q(status='live') | 
+            Q(status='draft', author=request.user)
         )
     else:
         # Anonymous users see only Live articles
@@ -133,12 +134,26 @@ def search_view(request):
     query = request.GET.get('q', '')
     
     if query:
-        articles = Article.objects.filter(
-            Q(title__icontains=query) | 
-            Q(content__icontains=query) |
-            Q(summary__icontains=query) |
-            Q(tags__contains=query)
-        )
+        # Filter articles based on status and user permissions
+        if request.user.is_authenticated:
+            # Authenticated users see Live articles + their own Draft articles
+            articles = Article.objects.filter(
+                Q(title__icontains=query) | 
+                Q(content__icontains=query) |
+                Q(summary__icontains=query) |
+                Q(tags__contains=query)
+            ).filter(
+                Q(status='live') | 
+                Q(status='draft', author=request.user)
+            )
+        else:
+            # Anonymous users see only Live articles
+            articles = Article.objects.filter(
+                Q(title__icontains=query) | 
+                Q(content__icontains=query) |
+                Q(summary__icontains=query) |
+                Q(tags__contains=query)
+            ).filter(status='live')
         
         # Add read, favorite status, and view counts for all users
         for article in articles:

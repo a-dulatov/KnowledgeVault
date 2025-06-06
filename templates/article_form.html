@@ -132,6 +132,21 @@
                     </div>
                     
                     <div class="mb-3">
+                        <label for="id_status" class="form-label">Status</label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.status.errors }}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <strong>Draft:</strong> Only visible to you<br>
+                            <strong>Live:</strong> Visible to all users<br>
+                            <strong>Archive:</strong> Not visible to anyone
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
                         <label for="id_content" class="form-label">Content</label>
                         {{ form.content }}
                         {% if form.content.errors %}
