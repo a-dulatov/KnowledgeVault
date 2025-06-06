@@ -101,11 +101,22 @@
             <div class="card article-card h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h5 class="card-title">{{ article.title }}</h5>
+                        <div>
+                            <h5 class="card-title">{{ article.title }}</h5>
+                            <div class="mb-2">
+                                {% if article.status == 'draft' %}
+                                <span class="badge bg-warning text-dark me-1">Draft</span>
+                                {% elif article.status == 'live' %}
+                                <span class="badge bg-success me-1">Live</span>
+                                {% elif article.status == 'archive' %}
+                                <span class="badge bg-secondary me-1">Archive</span>
+                                {% endif %}
+                                {% if user.is_authenticated and article.is_read %}
+                                <span class="badge bg-info">Read</span>
+                                {% endif %}
+                            </div>
+                        </div>
                         <div class="d-flex align-items-center">
-                            {% if user.is_authenticated and article.is_read %}
-                            <span class="badge bg-success me-2">Read</span>
-                            {% endif %}
                             {% if user.is_authenticated %}
                             <button class="btn btn-link p-0 me-1 favorite-btn" 
                                     data-article-id="{{ article.id }}" 
