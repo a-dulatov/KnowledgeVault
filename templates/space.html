@@ -76,8 +76,8 @@
                     <p class="card-text">{{ article.summary }}</p>
                     
                     <div class="mb-3">
-                        {% for tag in article.tags %}
-                        <span class="badge bg-secondary me-1">{{ tag }}</span>
+                        {% for tag in article.tags.all %}
+                        <span class="badge bg-secondary me-1">{{ tag.name }}</span>
                         {% endfor %}
                     </div>
                 </div>

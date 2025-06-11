@@ -527,26 +527,14 @@
         {% if article.tags.exists %}
         <div class="tag-container">
             <h5>Tags</h5>
-            {% regroup article.tags.all by category.group as tag_groups %}
-            {% for group in tag_groups %}
             <div class="mb-3">
-                <h6 class="text-primary mb-2">
-                    <i class="{{ group.grouper.icon }} me-2"></i>
-                    {{ group.grouper.name }}
-                </h6>
-                {% regroup group.list by category as categories %}
-                {% for category in categories %}
-                <div class="mb-2">
-                    <strong class="text-secondary">{{ category.grouper.name }}:</strong>
-                    {% for tag in category.list %}
-                    <a href="{% url 'search' %}?q={{ tag.name }}" class="tag-button bg-secondary bg-opacity-25 ms-1">
-                        <i class="fas fa-tag me-1"></i>{{ tag.name }}
-                    </a>
-                    {% endfor %}
-                </div>
+                {% for tag in article.tags.all %}
+                <a href="{% url 'search' %}?q={{ tag.name }}" class="tag-button bg-secondary bg-opacity-25 me-1 mb-1">
+                    <i class="fas fa-tag me-1"></i>{{ tag.name }}
+                    <small class="text-muted ms-1">({{ tag.category.group.name }} > {{ tag.category.name }})</small>
+                </a>
                 {% endfor %}
             </div>
-            {% endfor %}
         </div>
         {% endif %}
         

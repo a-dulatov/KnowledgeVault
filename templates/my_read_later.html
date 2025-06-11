@@ -74,8 +74,8 @@
                                             </h5>
                                             <p class="card-text">{{ read_later.article.summary|truncatewords:30 }}</p>
                                             <div class="mb-2">
-                                                {% for tag in read_later.article.tags %}
-                                                    <span class="badge bg-info me-1">{{ tag }}</span>
+                                                {% for tag in read_later.article.tags.all %}
+                                                    <span class="badge bg-info me-1">{{ tag.name }}</span>
                                                 {% endfor %}
                                             </div>
                                         </div>
