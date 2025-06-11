@@ -157,14 +157,45 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="id_tags_input" class="form-label">Tags</label>
-                        {{ form.tags_input }}
-                        {% if form.tags_input.errors %}
+                        <label class="form-label">Tags</label>
+                        <div class="card">
+                            <div class="card-body">
+                                {% regroup form.tags.field.queryset by category.group as tag_groups %}
+                                {% for group in tag_groups %}
+                                <div class="mb-3">
+                                    <h6 class="text-primary mb-2">
+                                        <i class="{{ group.grouper.icon }} me-2"></i>
+                                        {{ group.grouper.name }}
+                                    </h6>
+                                    {% regroup group.list by category as categories %}
+                                    {% for category in categories %}
+                                    <div class="mb-2">
+                                        <strong class="text-secondary">{{ category.grouper.name }}</strong>
+                                        <div class="ms-3">
+                                            {% for tag in category.list %}
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" name="tags" value="{{ tag.id }}" id="tag_{{ tag.id }}"
+                                                    {% if tag in form.tags.value %}checked{% endif %}>
+                                                <label class="form-check-label" for="tag_{{ tag.id }}">
+                                                    {{ tag.name }}
+                                                </label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% empty %}
+                                <p class="text-muted">No tags available. <a href="/admin/kb/tag/">Add tags in admin</a></p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% if form.tags.errors %}
                         <div class="invalid-feedback d-block">
-                            {{ form.tags_input.errors }}
+                            {{ form.tags.errors }}
                         </div>
                         {% endif %}
-                        <div class="form-text">Enter tags separated by commas (e.g., django, python, web).</div>
+                        <div class="form-text">Select relevant tags to categorize your article.</div>
                     </div>
                     
                     <div class="mb-3">

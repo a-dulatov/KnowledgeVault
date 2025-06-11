@@ -32,15 +32,16 @@ class RegistrationForm(UserCreationForm):
 
 
 class ArticleForm(forms.ModelForm):
-    tags_input = forms.CharField(
+    tags = forms.ModelMultipleChoiceField(
+        queryset=Tag.objects.select_related('category__group').all(),
         required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tags (comma separated)'})
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Select tags that apply to this article"
     )
 
-    
     class Meta:
         model = Article
-        fields = ('title', 'summary', 'space', 'status')
+        fields = ('title', 'summary', 'space', 'status', 'tags')
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
@@ -50,25 +51,25 @@ class ArticleForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # If editing existing article, convert list to comma-separated string
-        if self.instance and self.instance.pk and self.instance.tags:
-            self.initial['tags_input'] = ', '.join(self.instance.tags)
-    
-
-    def clean_tags_input(self):
-        tags_input = self.cleaned_data.get('tags_input', '')
-        if tags_input:
-            # Convert comma-separated string to list
-            return [tag.strip() for tag in tags_input.split(',') if tag.strip()]
-        return []
-    
-    def save(self, commit=True):
-        article = super().save(commit=False)
-        article.tags = self.cleaned_data.get('tags_input', [])
+        # Group tags by category for better display
+        tag_groups = {}
+        for tag in Tag.objects.select_related('category__group').all():
+            group_name = tag.category.group.name
+            category_name = tag.category.name
+            if group_name not in tag_groups:
+                tag_groups[group_name] = {}
+            if category_name not in tag_groups[group_name]:
+                tag_groups[group_name][category_name] = []
+            tag_groups[group_name][category_name].append((tag.id, f"{tag.name} ({tag.get_full_path()})"))
         
-        if commit:
-            article.save()
-        return article
+        # Create choices with hierarchical structure
+        choices = []
+        for group_name, categories in sorted(tag_groups.items()):
+            for category_name, tags in sorted(categories.items()):
+                for tag_id, tag_label in sorted(tags, key=lambda x: x[1]):
+                    choices.append((tag_id, tag_label))
+        
+        self.fields['tags'].queryset = Tag.objects.filter(id__in=[choice[0] for choice in choices])
         
     class Media:
         css = {

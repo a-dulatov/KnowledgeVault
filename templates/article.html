@@ -14,8 +14,8 @@
 <meta property="article:published_time" content="{{ article.created_at|date:'c' }}">
 <meta property="article:modified_time" content="{{ article.updated_at|date:'c' }}">
 <meta property="article:section" content="{{ article.space.name }}">
-{% for tag in article.tags %}
-<meta property="article:tag" content="{{ tag }}">
+{% for tag in article.tags.all %}
+<meta property="article:tag" content="{{ tag.name }}">
 {% endfor %}
 
 <!-- Twitter Card Meta Tags -->
@@ -26,7 +26,7 @@
 
 <!-- Additional Meta Tags -->
 <meta name="description" content="{{ article.summary|striptags }}">
-<meta name="keywords" content="{% for tag in article.tags %}{{ tag }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+<meta name="keywords" content="{% for tag in article.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}">
 <meta name="author" content="{% if article.author %}{{ article.author.username }}{% else %}Anonymous{% endif %}">
 
 <!-- Canonical URL -->
@@ -524,16 +524,31 @@
         {% endif %}
         
         <!-- Tags -->
+        {% if article.tags.exists %}
         <div class="tag-container">
             <h5>Tags</h5>
-            <div>
-                {% for tag in article.tags %}
-                <a href="{% url 'search' %}?q={{ tag }}" class="tag-button bg-secondary bg-opacity-25">
-                    <i class="fas fa-tag me-1"></i>{{ tag }}
-                </a>
+            {% regroup article.tags.all by category.group as tag_groups %}
+            {% for group in tag_groups %}
+            <div class="mb-3">
+                <h6 class="text-primary mb-2">
+                    <i class="{{ group.grouper.icon }} me-2"></i>
+                    {{ group.grouper.name }}
+                </h6>
+                {% regroup group.list by category as categories %}
+                {% for category in categories %}
+                <div class="mb-2">
+                    <strong class="text-secondary">{{ category.grouper.name }}:</strong>
+                    {% for tag in category.list %}
+                    <a href="{% url 'search' %}?q={{ tag.name }}" class="tag-button bg-secondary bg-opacity-25 ms-1">
+                        <i class="fas fa-tag me-1"></i>{{ tag.name }}
+                    </a>
+                    {% endfor %}
+                </div>
                 {% endfor %}
             </div>
+            {% endfor %}
         </div>
+        {% endif %}
         
         <!-- Article Rating -->
         <div class="card mb-4" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
