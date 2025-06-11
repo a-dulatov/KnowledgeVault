@@ -29,6 +29,79 @@ class Label(models.Model):
     class Meta:
         verbose_name_plural = "Labels"
 
+
+class TagGroup(models.Model):
+    """High-level groups of tags (e.g., Technology, Business, Science)"""
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    color = models.CharField(max_length=7, choices=Label.COLOR_CHOICES, default='#007bff')
+    icon = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['name']
+        verbose_name = "Tag Group"
+        verbose_name_plural = "Tag Groups"
+    
+    def __str__(self):
+        return self.name
+
+
+class TagCategory(models.Model):
+    """Second-level categories within tag groups (e.g., Programming Languages under Technology)"""
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    group = models.ForeignKey(TagGroup, on_delete=models.CASCADE, related_name='categories')
+    color = models.CharField(max_length=7, choices=Label.COLOR_CHOICES, default='#6c757d')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['group__name', 'name']
+        unique_together = ['name', 'group']
+        verbose_name = "Tag Category"
+        verbose_name_plural = "Tag Categories"
+    
+    def __str__(self):
+        return f"{self.group.name} → {self.name}"
+
+
+class Tag(models.Model):
+    """Third-level individual tags within categories (e.g., Python under Programming Languages)"""
+    name = models.CharField(max_length=50)
+    description = models.TextField(blank=True)
+    category = models.ForeignKey(TagCategory, on_delete=models.CASCADE, related_name='tags')
+    color = models.CharField(max_length=7, choices=Label.COLOR_CHOICES, default='#e9ecef')
+    usage_count = models.PositiveIntegerField(default=0, help_text="Number of articles using this tag")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['category__group__name', 'category__name', 'name']
+        unique_together = ['name', 'category']
+        verbose_name = "Tag"
+        verbose_name_plural = "Tags"
+    
+    def __str__(self):
+        return f"{self.category.group.name} → {self.category.name} → {self.name}"
+    
+    def get_full_path(self):
+        """Get the full hierarchical path of the tag"""
+        return f"{self.category.group.name} / {self.category.name} / {self.name}"
+    
+    def increment_usage(self):
+        """Increment the usage count when tag is used in an article"""
+        self.usage_count += 1
+        self.save(update_fields=['usage_count'])
+    
+    def decrement_usage(self):
+        """Decrement the usage count when tag is removed from an article"""
+        if self.usage_count > 0:
+            self.usage_count -= 1
+            self.save(update_fields=['usage_count'])
+
+
 class Space(models.Model):
     ICON_CHOICES = [
         ('fas fa-folder', 'Folder'),
@@ -76,7 +149,8 @@ class Article(models.Model):
     space = models.ForeignKey(Space, on_delete=models.CASCADE, related_name='articles')
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='articles', null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
-    tags = models.JSONField(default=list)
+    tags = models.ManyToManyField(Tag, blank=True, related_name='articles')
+    legacy_tags = models.JSONField(default=list, help_text="Legacy tags for backward compatibility")
     created_at = models.DateField(default=timezone.now)
     updated_at = models.DateField(default=timezone.now)
     

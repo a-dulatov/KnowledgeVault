@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import (Label, Space, Article, ArticleAttachment, ArticleParagraph, 
                      ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView,
-                     ArticleRating, ArticleComment, ParagraphLike, ArticleReadStatus, ReadLater)
+                     ArticleRating, ArticleComment, ParagraphLike, ArticleReadStatus, ReadLater,
+                     TagGroup, TagCategory, Tag)
 
 class ArticleAttachmentInline(admin.TabularInline):
     model = ArticleAttachment
@@ -232,3 +233,90 @@ class ReadLaterAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         # Prevent manual creation of read later records
         return False
+
+
+# Tag Structure Administration
+class TagCategoryInline(admin.TabularInline):
+    model = TagCategory
+    extra = 1
+    fields = ('name', 'description', 'color')
+    show_change_link = True
+
+
+class TagInline(admin.TabularInline):
+    model = Tag
+    extra = 1
+    fields = ('name', 'description', 'color', 'usage_count')
+    readonly_fields = ('usage_count',)
+    show_change_link = True
+
+
+@admin.register(TagGroup)
+class TagGroupAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description', 'color', 'icon', 'category_count', 'created_at')
+    list_filter = ('color', 'created_at')
+    search_fields = ('name', 'description')
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [TagCategoryInline]
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'description', 'color', 'icon')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def category_count(self, obj):
+        return obj.categories.count()
+    category_count.short_description = 'Categories'
+
+
+@admin.register(TagCategory)
+class TagCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'group', 'description', 'color', 'tag_count', 'created_at')
+    list_filter = ('group', 'color', 'created_at')
+    search_fields = ('name', 'description', 'group__name')
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [TagInline]
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'group', 'description', 'color')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def tag_count(self, obj):
+        return obj.tags.count()
+    tag_count.short_description = 'Tags'
+
+
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category', 'group_name', 'usage_count', 'color', 'created_at')
+    list_filter = ('category__group', 'category', 'color', 'created_at')
+    search_fields = ('name', 'description', 'category__name', 'category__group__name')
+    readonly_fields = ('usage_count', 'created_at', 'updated_at')
+    ordering = ['category__group__name', 'category__name', 'name']
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'category', 'description', 'color')
+        }),
+        ('Usage Statistics', {
+            'fields': ('usage_count',),
+            'classes': ('collapse',)
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def group_name(self, obj):
+        return obj.category.group.name
+    group_name.short_description = 'Group'
+    group_name.admin_order_field = 'category__group__name'
