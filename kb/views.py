@@ -302,6 +302,7 @@ def create_article(request):
             article.created_at = timezone.now()
             article.updated_at = timezone.now()
             article.save()
+            form.save_m2m()  # Save many-to-many relationships (tags)
             
             # Handle multiple file uploads
             files = request.FILES.getlist('attachments')
@@ -343,6 +344,7 @@ def edit_article(request, article_id):
             article = form.save(commit=False)
             article.updated_at = timezone.now()
             article.save()
+            form.save_m2m()  # Save many-to-many relationships (tags)
             
             # Handle multiple file uploads
             files = request.FILES.getlist('attachments')
