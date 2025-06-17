@@ -51,6 +51,7 @@ class ArticleForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
         # Group tags by category for better display
         tag_groups = {}
         for tag in Tag.objects.select_related('category__group').all():
@@ -70,6 +71,10 @@ class ArticleForm(forms.ModelForm):
                     choices.append((tag_id, tag_label))
         
         self.fields['tags'].queryset = Tag.objects.filter(id__in=[choice[0] for choice in choices])
+        
+        # Set initial values for tags when editing
+        if self.instance and self.instance.pk:
+            self.fields['tags'].initial = self.instance.tags.all()
         
     class Media:
         css = {
