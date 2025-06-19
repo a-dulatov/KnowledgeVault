@@ -1,0 +1,142 @@
+{% extends 'layout.html' %}
+
+{% block title %}Create Article from File{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-file-upload me-2"></i>
+                        Create Article from MS Word File
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Upload Process:</strong>
+                        <ol class="mb-0 mt-2">
+                            <li>Upload your Microsoft Word document (.docx or .doc)</li>
+                            <li>The system will convert the document content to HTML</li>
+                            <li>A new article will be created with a single paragraph containing all the content</li>
+                        </ol>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">Article Title</label>
+                            {{ form.title }}
+                            <div class="form-text">{{ form.title.help_text }}</div>
+                            {% if form.title.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.title.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.space.id_for_label }}" class="form-label">Space</label>
+                            {{ form.space }}
+                            <div class="form-text">{{ form.space.help_text }}</div>
+                            {% if form.space.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.space.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.file.id_for_label }}" class="form-label">MS Word Document</label>
+                            {{ form.file }}
+                            <div class="form-text">{{ form.file.help_text }}</div>
+                            {% if form.file.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.file.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'index' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Home
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload and Create Article
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-question-circle me-2"></i>
+                        Supported Features
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-success"><i class="fas fa-check me-2"></i>Supported</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check-circle text-success me-2"></i>Text paragraphs</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i>Headings (H1-H6)</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i>Bold and italic formatting</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i>Tables</li>
+                                <li><i class="fas fa-check-circle text-success me-2"></i>Basic document structure</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Limited Support</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-exclamation-circle text-warning me-2"></i>Images (not converted)</li>
+                                <li><i class="fas fa-exclamation-circle text-warning me-2"></i>Complex formatting</li>
+                                <li><i class="fas fa-exclamation-circle text-warning me-2"></i>Charts and graphs</li>
+                                <li><i class="fas fa-exclamation-circle text-warning me-2"></i>Custom styles</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.querySelector('input[type="file"]');
+    const form = document.querySelector('form');
+    
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            // Auto-fill title if empty
+            const titleInput = document.querySelector('input[name="title"]');
+            if (!titleInput.value) {
+                const fileName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
+                titleInput.value = fileName;
+            }
+        }
+    });
+    
+    form.addEventListener('submit', function() {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}
