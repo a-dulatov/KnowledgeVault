@@ -20,8 +20,17 @@ import json
 import markdown
 import bleach
 import urllib.parse
-from weasyprint import HTML, CSS
-from weasyprint.text.fonts import FontConfiguration
+from docx import Document
+from bs4 import BeautifulSoup
+try:
+    from weasyprint import HTML, CSS
+    from weasyprint.text.fonts import FontConfiguration
+    WEASYPRINT_AVAILABLE = True
+except (ImportError, OSError):
+    WEASYPRINT_AVAILABLE = False
+    HTML = None
+    CSS = None
+    FontConfiguration = None
 
 def index(request):
     """Home page with featured articles and spaces"""

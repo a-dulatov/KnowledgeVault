@@ -16,4 +16,6 @@ dependencies = [
     "bleach>=6.2.0",
     "openai>=1.84.0",
     "anthropic>=0.52.2",
+    "python-docx>=1.2.0",
+    "beautifulsoup4>=4.13.4",
 ]
