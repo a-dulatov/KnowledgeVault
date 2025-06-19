@@ -14,7 +14,7 @@ from django.db.models import Q
 from .models import (Label, Article, Space, ArticleAttachment, ArticleParagraph, 
                      ParagraphAttachment, ShareSettings, SecureShareLink, ShareLinkView,
                      ArticleRating, ArticleComment, ParagraphLike, ArticleReadStatus, ArticleFavorite, ReadLater)
-from .forms import LoginForm, RegistrationForm, ArticleForm, ParagraphForm
+from .forms import LoginForm, RegistrationForm, ArticleForm, ParagraphForm, FileUploadForm
 from django.db.models import Q
 import json
 import markdown
@@ -1203,3 +1203,104 @@ def my_read_later(request):
         'labels': labels,
     }
     return render(request, 'my_read_later.html', context)
+
+
+@login_required
+def create_article_from_file(request):
+    """Create article from uploaded MS Word file"""
+    if request.method == 'POST':
+        form = FileUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                # Get form data
+                uploaded_file = form.cleaned_data['file']
+                title = form.cleaned_data['title']
+                space = form.cleaned_data['space']
+                
+                # Use filename as title if not provided
+                if not title:
+                    title = uploaded_file.name.rsplit('.', 1)[0]
+                
+                # Convert MS Word to HTML
+                html_content = convert_docx_to_html(uploaded_file)
+                
+                # Create article
+                article = Article.objects.create(
+                    title=title,
+                    summary=f"Article created from uploaded file: {uploaded_file.name}",
+                    space=space,
+                    author=request.user,
+                    status='draft'
+                )
+                
+                # Create single paragraph with converted content
+                ArticleParagraph.objects.create(
+                    article=article,
+                    title="Document Content",
+                    content=html_content,
+                    order=1
+                )
+                
+                messages.success(request, f'Article "{title}" created successfully from {uploaded_file.name}!')
+                return redirect('article_detail', article_id=article.id)
+                
+            except Exception as e:
+                messages.error(request, f'Error processing file: {str(e)}')
+    else:
+        form = FileUploadForm()
+    
+    return render(request, 'create_from_file.html', {'form': form})
+
+
+def convert_docx_to_html(uploaded_file):
+    """Convert MS Word document to HTML"""
+    try:
+        # Read the document
+        doc = Document(uploaded_file)
+        
+        # Extract text and basic formatting
+        html_parts = []
+        
+        for paragraph in doc.paragraphs:
+            text = paragraph.text.strip()
+            if text:
+                # Basic paragraph handling
+                if paragraph.style.name.startswith('Heading'):
+                    level = paragraph.style.name.replace('Heading ', '')
+                    if level.isdigit() and int(level) <= 6:
+                        html_parts.append(f'<h{level}>{text}</h{level}>')
+                    else:
+                        html_parts.append(f'<h3>{text}</h3>')
+                else:
+                    # Check for bold/italic formatting
+                    formatted_text = text
+                    for run in paragraph.runs:
+                        if run.bold and run.text in formatted_text:
+                            formatted_text = formatted_text.replace(run.text, f'<strong>{run.text}</strong>')
+                        elif run.italic and run.text in formatted_text:
+                            formatted_text = formatted_text.replace(run.text, f'<em>{run.text}</em>')
+                    
+                    html_parts.append(f'<p>{formatted_text}</p>')
+        
+        # Handle tables
+        for table in doc.tables:
+            html_parts.append('<table class="table table-bordered">')
+            for row in table.rows:
+                html_parts.append('<tr>')
+                for cell in row.cells:
+                    cell_text = cell.text.strip()
+                    html_parts.append(f'<td>{cell_text}</td>')
+                html_parts.append('</tr>')
+            html_parts.append('</table>')
+        
+        # Join all parts
+        html_content = '\n'.join(html_parts)
+        
+        # Clean up the HTML using BeautifulSoup
+        soup = BeautifulSoup(html_content, 'html.parser')
+        cleaned_html = str(soup)
+        
+        return cleaned_html
+        
+    except Exception as e:
+        raise Exception(f"Failed to convert document: {str(e)}")
